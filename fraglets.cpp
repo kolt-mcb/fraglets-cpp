@@ -3,29 +3,39 @@ using namespace std;
 
 void fraglets::inject(vector<string> molecule,int mult=1){
     if (molecule.empty() | mult < 1){return;}
-    if (this->isbimol(molecule)){
-        if (molecule.size() >1){
+    if (molecule.size() >1){
+        if (this->isbimol(molecule)){
+                string key = molecule[1];
+                // could check for invalid fraglets here.
+                if (this->active.count(key) > 0){
+                    molecule_multiset mset;
+                    this->active[key] = &mset;
+                }
+                molecule_multiset mset = *this->active[key];
+                for (int i =0; i<mult;i++){
+                    mset.insert(&molecule);
+                }
+                this->idle = false;
+            }
+        else if (this->isunimol(molecule)){
+            for (int i = 0; i<mult;i++){
+                this->unimol.insert(&molecule);
+            }
+        }
+        else{
             string key = molecule[1];
             // could check for invalid fraglets here.
-            if (this->active.count(key) > 0){
+            if (this->passive.count(key) > 0){
                 molecule_multiset mset;
-                this->active[key] = &mset;
+                this->passive[key] = &mset;
             }
-   
+            
+            molecule_multiset mset = *this->passive[key];
             for (int i =0; i<mult;i++){
-                molecule_multiset mset;
                 mset.insert(&molecule);
             }
             this->idle = false;
         }
-    else if (this->isunimol(molecule)){
-
-    }
-//             if len(mol) > 1:
-//                 self.unimol.inject(mol, mult)
-//                 self.idle = False
-//             # else discard invalid fraglet
-    else{return;}
     }
 }   
 bool fraglets::isbimol(vector<string> molecule){
