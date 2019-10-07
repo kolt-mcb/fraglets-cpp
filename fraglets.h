@@ -3,14 +3,16 @@
 #include <set>
 #include <map>
 #include <vector> 
-using namespace std;
 
 
+typedef std::vector<std::string> molecule;
+typedef std::unordered_multiset<molecule*>   molecule_multiset;
+typedef std::map<std::string,molecule_multiset*>  keyMultiset;
+typedef keyMultiset::iterator keyMultisetIterator;
 
 
-typedef map<string,unordered_multiset<vector<string>*>*>  keymultiset;
-typedef unordered_multiset<vector<string>*>   molecule_multiset;
-typedef std::map<std::string, float> prop;
+typedef std::map<std::string, float> prop_map;
+
 
 // nested_unordered_multiset testset1;
 // string_unordered_multiset testset2 = {"test","test","test2"};
@@ -27,38 +29,22 @@ typedef std::map<std::string, float> prop;
 // string ops::match = "match";
 // string ops::matchp = "matchp";
 
-set<string> ops = {"match","matchp","fork","nop"};
+std::set<std::string> ops = {"match","matchp","fork","nop"};
 
 class fraglets {
     private:
-        keymultiset active, passive;
+        keyMultiset active, passive;
         molecule_multiset unimol;
         // ops ops;
-        // prop prop;
+        prop_map prop;
         float wt;
         bool idle;
     public:
-        void inject(vector<string> molecule,int mult);
-        bool isbimol(vector<string> molecule);
-        bool isunimol(vector<string> molecule);
+        void inject(std::vector<std::string> molecule,int mult);
+        float propensity();
+        void run_unimol();
+        bool isbimol(std::vector<std::string> molecule);
+        bool isunimol(std::vector<std::string> molecule);
         
 
 };
-
-        // self.op fraglets::= { # implementation of instruction set
-        //     'M' : [ self.r_match,  'match' ],
-        //     'Z' : [ self.r_matchp, 'matchp' ],
-        //     'D' : [ self.r_dup,    'dup' ],
-        //     'E' : [ self.r_exch,   'exch' ],
-        //     'P' : [ self.r_pop,    'pop' ],
-        //     'N' : [ self.r_nop,    'nop' ],
-        //     'U' : [ self.r_nul,    'nul' ],
-        //     'S' : [ self.r_split,  'split' ],
-        //     'X' : [ self.r_send,   'send' ],
-        //     'F' : [ self.r_fork,   'fork' ]
-        // }
-//  self.prop = {}
-//         self.wt = 0.0
-//         self.cnx = {} # list of remote connections, identified by a tag
-//         self.nodeid = nid # tag that identifies this node
-//         self.idle = Tru

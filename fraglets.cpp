@@ -1,11 +1,10 @@
 #include "fraglets.h"
-using namespace std;
 
-void fraglets::inject(vector<string> molecule,int mult=1){
+void fraglets::inject(molecule molecule,int mult=1){
     if (molecule.empty() | mult < 1){return;}
     if (molecule.size() >1){
         if (this->isbimol(molecule)){
-                string key = molecule[1];
+                std::string key = molecule[1];
                 // could check for invalid fraglets here.
                 if (this->active.count(key) > 0){
                     molecule_multiset mset;
@@ -23,7 +22,7 @@ void fraglets::inject(vector<string> molecule,int mult=1){
             }
         }
         else{
-            string key = molecule[1];
+            std::string key = molecule[1];
             // could check for invalid fraglets here.
             if (this->passive.count(key) > 0){
                 molecule_multiset mset;
@@ -38,57 +37,51 @@ void fraglets::inject(vector<string> molecule,int mult=1){
         }
     }
 }   
-bool fraglets::isbimol(vector<string> molecule){
+bool fraglets::isbimol(molecule molecule){
     if (molecule.empty()){ return false;}
-    string head = molecule[0];
+    std::string head = molecule[0];
     return head == "match" | head == "matchp";
 }
-bool fraglets::isunimol(vector<string> molecule){
+bool fraglets::isunimol(molecule molecule){
     if (molecule.empty()){ return false;}
-    string head = molecule[0];
+    std::string head = molecule[0];
     return ops.count(head) & !this->isbimol(molecule);
 }
 
-    // def isbimol(self, mol):
-    //     """ true if fraglet 'mol' starts with a bimolecular reaction rule """
-    //     if mol == '': return False
-    //     return mol[0] == self.instr['match'] or mol[0] == self.instr['matchp']
-    // def inject( self, key, mol, mult=1 ):
-    //     """ inject a given amount of a molecule in the multiset,
-    //         indexed by the provided key
-    //     """
-	// if (key == '' or mol == '' or mult < 1): return
-	// if (key in self.keymset):
-    //         self.keymset[key].inject(mol, mult)
-	// else:
-    //         self.keymset[key] = Multiset()
-    //         self.keymset[key].inject(mol, mult)
-	// self.total += mult
+float fraglets::propensity(){
+    this->run_unimol();
+    this->prop.clear();
+    this->wt = 0;
+    keyMultisetIterator it = this->active.begin();
+    for (;it != this->active.end();it++){
+        std::string key = it->first;
+        molecule_multiset mset = *it->second;
+        std::size_t m = mset.size();
+        molecule_multiset passive_mset = *this->passive[key];
+        std::size_t p = passive_mset.size();
+        std::size_t w = m*p;
+        if (w > 0){
+            this->prop[key] = w;
+        }
+        this->wt += w;
+    }
+    if (this->wt <= 0){this->idle = true;}
+    return this->wt;
 
+}
 
-
-
-
-//  def inject( self, mol, mult=1 ):
-//         """ inject 'mult' copies of fraglet 'mol' in the reactor """
-// 	if (mol == '' or mult < 1): return
-//         if (self.isbimol(mol)):
-//             if len(mol) > 1:
-//                 key = mol[1]
-//                 #if key in self.op: # invalid fraglet
-//                 #    while len(mol) > 1 and self.isbimol(mol):
-//                 #        # eliminate [match match match ...] sequences
-//                 #        mol = mol[1:]
-//                 #    #pending: clean fraglet
-//                 self.active.inject(key, mol, mult)
-//                 self.idle = False
-//             # else discard invalid fraglet
-//         elif (self.isunimol(mol)):
-//             if len(mol) > 1:
-//                 self.unimol.inject(mol, mult)
-//                 self.idle = False
-//             # else discard invalid fraglet
-//         else:
-//             key = mol[0]
-//             self.passive.inject(key, mol, mult)
-//             self.idle = False
+//    def react(self, w):
+//         """ perform the selected reaction pointed to by the dice position w
+//             (typically involked from the hierarchical Gillespie SSA
+//             implementation in Cell.py)
+//         """
+//         if self.wt <= 0: return
+//         for k in self.active.keys():
+//             if (k in self.prop):
+//                 if self.prop[k] > 0 and w < self.prop[k]:
+//                     mol1 = self.active.expelrnd(k)
+//                     mol2 = self.passive.expelrnd(k)
+//                     res = self.react2(mol1, mol2)
+//                     self.inject_list(res)
+//                     return
+//                 w -= self.prop[k]
