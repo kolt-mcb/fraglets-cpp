@@ -1,4 +1,6 @@
 #include "fraglets.h"
+#include <algorithm>
+
 
 void fraglets::inject(molecule molecule,int mult=1){
     if (molecule.empty() | mult < 1){return;}
@@ -6,33 +8,18 @@ void fraglets::inject(molecule molecule,int mult=1){
         if (this->isbimol(molecule)){
                 std::string key = molecule[1];
                 // could check for invalid fraglets here.
-                if (this->active.count(key) > 0){
-                    molecule_multiset mset;
-                    this->active[key] = &mset;
-                }
-                molecule_multiset mset = *this->active[key];
-                for (int i =0; i<mult;i++){
-                    mset.insert(&molecule);
-                }
+                this->active.inject(key,molecule,mult);
                 this->idle = false;
             }
         else if (this->isunimol(molecule)){
             for (int i = 0; i<mult;i++){
-                this->unimol.insert(&molecule);
+                this->unimol.inject(molecule,mult);
             }
         }
         else{
             std::string key = molecule[1];
             // could check for invalid fraglets here.
-            if (this->passive.count(key) > 0){
-                molecule_multiset mset;
-                this->passive[key] = &mset;
-            }
-            
-            molecule_multiset mset = *this->passive[key];
-            for (int i =0; i<mult;i++){
-                mset.insert(&molecule);
-            }
+            this->passive.inject(key,molecule,mult);
             this->idle = false;
         }
     }
@@ -52,13 +39,13 @@ float fraglets::propensity(){
     this->run_unimol();
     this->prop.clear();
     this->wt = 0;
-    keyMultisetIterator it = this->active.begin();
-    for (;it != this->active.end();it++){
+    keyMultisetMap::iterator it = this->active.keyMap.begin();
+    for (;it != this->active.keyMap.end();it++){
         std::string key = it->first;
-        molecule_multiset mset = *it->second;
-        std::size_t m = mset.size();
-        molecule_multiset passive_mset = *this->passive[key];
-        std::size_t p = passive_mset.size();
+        moleculeMultiset mset = *it->second;
+        std::size_t m = mset.multiset.size();
+        moleculeMultiset passive_mset = *this->passive.keyMap[key];
+        std::size_t p = passive_mset.multiset.size();
         std::size_t w = m*p;
         if (w > 0){
             this->prop[key] = w;
@@ -67,6 +54,38 @@ float fraglets::propensity(){
     }
     if (this->wt <= 0){this->idle = true;}
     return this->wt;
+
+}
+
+void fraglets::react(float w){
+        // """ perform the selected reaction pointed to by the dice position w
+        //     (typically involked from the hierarchical Gillespie SSA
+        // """
+        if (this->wt < 0){ return;}
+        keyMultisetMap::iterator it = this->active.keyMap.begin();
+        for (;it != this->active.keyMap.end();it++){
+            std::string key = it->first;
+            propMapIterator it = this->prop.find(key);
+            if(it != this->prop.end()){
+                float propValue = it->second;
+                if (propValue > 0 and w < propValue  ){
+                    int r = rand() % this->active.keyMap.size();
+                    // molecule mol1 = this->active.
+
+                }
+            }
+
+
+        }
+
+// map<int,Bar>::iterator it = m.find('2');
+// Bar b3;
+// if(it != m.end())
+// {
+//    //element found;
+//    b3 = it->second;
+// }
+
 
 }
 
@@ -85,3 +104,5 @@ float fraglets::propensity(){
 //                     self.inject_list(res)
 //                     return
 //                 w -= self.prop[k]
+
+
