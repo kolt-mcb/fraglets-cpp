@@ -48,5 +48,8 @@ int main() {
     x.push_back("x");
     cout << frag.isbimol(x);
 
+
+
+
     return 0;
 }

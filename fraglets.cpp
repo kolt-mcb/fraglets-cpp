@@ -1,5 +1,9 @@
 #include "fraglets.h"
 #include <algorithm>
+#include <iostream>
+
+
+
 
 
 void fraglets::inject(molecule molecule,int mult=1){
@@ -69,25 +73,65 @@ void fraglets::react(float w){
             if(it != this->prop.end()){
                 float propValue = it->second;
                 if (propValue > 0 and w < propValue  ){
-                    int r = rand() % this->active.keyMap.size();
-                    // molecule mol1 = this->active.
-
-                }
+                    molecule activeMolecule = this->active.expelrnd(key);
+                    molecule passiveMolecule = this->passive.expelrnd(key);
+                    std::vector<molecule> result = this->react2(activeMolecule,passiveMolecule);
             }
-
-
         }
+    }
+}
 
-// map<int,Bar>::iterator it = m.find('2');
-// Bar b3;
-// if(it != m.end())
-// {
-//    //element found;
-//    b3 = it->second;
-// }
+std::vector<molecule> fraglets::react2(molecule activeMolecule,molecule passiveMolecule ){
+    std::string tag = activeMolecule[0];
+    std::string match;
+    if (tag==match){
+        this->match(activeMolecule,passiveMolecule);
+    }
+}
 
+int fraglets::run_unimol(){
+    int n = 0;
+    while (!this->unimol.multiset.empty()){
+        molecule mol = this->unimol.expelrnd();
+        opResult result = this->react1(mol);
+        this->inject_list(result);
+        n++;
+    }
+    return n;
+}
+
+opResult fraglets::match(molecule activeMolecule, molecule passiveMolecule){
+    opResult result;
+    return result;
+}
+
+void fraglets::inject_list(opResult result){
 
 }
+
+opResult fraglets::react1(molecule mol){
+
+}
+
+    // def run_unimol(self):
+    //     """ run all unimolecular transformations at once """
+    //     n = 0
+    //     while self.unimol.mult() > 0:
+    //         mol = self.unimol.expelrnd()
+    //         res = self.react1(mol)
+    //         self.inject_list(res)
+    //         n += 1
+    //     return n
+
+    // def react2(self, mol1, mol2):
+    //     """ fire bimolecular reaction between mol1 and mol2 """
+    //     f = self.getmethod(mol1)
+    //     result = f(mol1, mol2)
+    //     self.trace_reaction([mol1, mol2], result)
+    //     return result
+
+
+
 
 //    def react(self, w):
 //         """ perform the selected reaction pointed to by the dice position w

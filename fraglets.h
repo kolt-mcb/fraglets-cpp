@@ -4,12 +4,15 @@
 #include <map>
 #include <vector> 
 #include "keymultiset.h"
+#include <functional>
 
 
 typedef std::map<std::string, float> propMap;
 
 typedef std::map<std::string, float>::iterator propMapIterator;
-
+typedef std::vector<molecule> opResult;
+typedef std::function<opResult (molecule)> op ; 
+// typedef opResult (*op)(molecule);
 
 // nested_unordered_multiset testset1;
 // string_unordered_multiset testset2 = {"test","test","test2"};
@@ -28,6 +31,10 @@ typedef std::map<std::string, float>::iterator propMapIterator;
 
 std::set<std::string> ops = {"match","matchp","fork","nop"};
 
+
+
+
+
 class fraglets {
     private:
         keyMultiset active, passive;
@@ -37,12 +44,17 @@ class fraglets {
         float wt;
         bool idle;
     public:
-        void inject(molecule molecule,int mult);
+        void inject(molecule mol,int mult);
         float propensity();
-        void run_unimol();
-        bool isbimol(molecule molecule);
-        bool isunimol(molecule molecule);
+        int run_unimol();
+        bool isbimol(molecule mol);
+        bool isunimol(molecule mol);
         void react(float w);
+        opResult react1(molecule molecule);
+        std::vector<molecule> react2(molecule activeMolecule ,molecule passiveMolecule);
+        opResult match(molecule activeMolecule ,molecule passiveMolecule);
+        opResult fork(molecule molecule);
+        void inject_list(opResult);
         
 
 };

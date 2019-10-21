@@ -10,7 +10,7 @@ class keyMultiset  {
     
     public:
         void inject(std::string key, molecule molecule, int mult=1);
-        molecule expel(std::string key, molecule mol, int mult);
+        void expel(std::string key, molecule mol, int mult=1);
         molecule rndmol(std::string key);
         molecule expelrnd(std::string key);
         int mult(molecule molecule);
