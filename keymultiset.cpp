@@ -2,11 +2,6 @@
 
 
 
-
-// keyMultiset::keyMultiset(){
-//     keyMultisetMap keyMap = keyMultisetMap();
-// }
-
 void keyMultiset::inject(std::string key, molecule mol, int mult){
     if (key.empty() or mol.empty()){return;}
     keyMultisetMap::iterator it = this->keyMap.find(key);

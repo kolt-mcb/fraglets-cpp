@@ -1,9 +1,9 @@
 #include <iostream>
 #include <unordered_set>
 // #include "unordered_multiset.cpp"
-#include "fraglets.cpp"
+#include "fraglets.h"
 
-using namespace std;
+
 
 
 // typedef unordered_multiset<unordered_multiset<string>*>  nested_unordered_multiset;
@@ -42,12 +42,10 @@ int main() {
 
 
     fraglets frag;
-    vector<string> x ;
+    molecule mol = {{"fork"},{"nop"},{"x"},{"match"},{"x"},{"fork"},{"nop"},{"x"}};
+    frag.inject(mol);
 
-    x.push_back("jdnfjnf");
-    x.push_back("x");
-    cout << frag.isbimol(x);
-
+    frag.run(50);
 
 
 

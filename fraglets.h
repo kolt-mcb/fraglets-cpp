@@ -1,3 +1,5 @@
+#ifndef FRAGLETS_H
+#define FRAGLETS_H
 
 #include <unordered_set>
 #include <set>
@@ -5,34 +7,30 @@
 #include <vector> 
 #include "keymultiset.h"
 #include <functional>
+#include <unordered_map>
 
 
-typedef std::map<std::string, float> propMap;
+typedef std::map<std::string, double> propMap;
 
-typedef std::map<std::string, float>::iterator propMapIterator;
+typedef std::map<std::string, double>::iterator propMapIterator;
 typedef std::vector<molecule> opResult;
-typedef std::function<opResult (molecule)> op ; 
-// typedef opResult (*op)(molecule);
-
-// nested_unordered_multiset testset1;
-// string_unordered_multiset testset2 = {"test","test","test2"};
-
-// typedef unordered_multiset<unordered_multiset<string>*>::iterator numit;
-// typedef unordered_multiset<string>::iterator umit;
-
-// class ops {
-//     public:
-//         static string match;// = "match";
-//         static string matchp;// = "match";
-
-// };
-// string ops::match = "match";
-// string ops::matchp = "matchp";
-
-std::set<std::string> ops = {"match","matchp","fork","nop"};
+typedef std::function<opResult (molecule,molecule)> bimolOp ; 
+typedef std::function<opResult (molecule)> unimolOp ;
 
 
+extern std::string match;
+extern std::string matchp;
+extern std::string dup;
+extern std::string exch;
+extern std::string pop;
+extern std::string nop;
+extern std::string nul;
+extern std::string split;
+extern std::string send;
+extern std::string fork;
 
+extern std::unordered_set<std::string> bimolTags;
+extern std::unordered_set<std::string> unimolTags;
 
 
 class fraglets {
@@ -41,20 +39,24 @@ class fraglets {
         moleculeMultiset unimol;
         // ops ops;
         propMap prop;
-        float wt;
+        double wt;
         bool idle;
     public:
-        void inject(molecule mol,int mult);
-        float propensity();
+        void inject(molecule mol,int mult=1);
+        double propensity();
         int run_unimol();
         bool isbimol(molecule mol);
         bool isunimol(molecule mol);
-        void react(float w);
+        void react(double w);
         opResult react1(molecule molecule);
         std::vector<molecule> react2(molecule activeMolecule ,molecule passiveMolecule);
-        opResult match(molecule activeMolecule ,molecule passiveMolecule);
-        opResult fork(molecule molecule);
         void inject_list(opResult);
+        void iterate();
+        void run(int niter);
+        bool inert();
+        void run_bimol();
         
 
 };
+
+#endif
