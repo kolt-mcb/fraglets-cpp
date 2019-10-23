@@ -1,8 +1,4 @@
-#include <iostream>
-#include <unordered_set>
-// #include "unordered_multiset.cpp"
 #include "fraglets.h"
-
 
 
 
@@ -42,10 +38,12 @@ int main() {
 
 
     fraglets frag;
-    molecule mol = {{"fork"},{"nop"},{"x"},{"match"},{"x"},{"fork"},{"nop"},{"x"}};
+    molecule mol = {"fork nop x match x fork nop x"};
     frag.inject(mol);
 
     frag.run(50);
+
+  
 
 
 

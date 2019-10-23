@@ -1,13 +1,12 @@
 #ifndef FRAGLETS_H
 #define FRAGLETS_H
 
-#include <unordered_set>
-#include <set>
+#include "keymultiset.h"
 #include <map>
 #include <vector> 
-#include "keymultiset.h"
+
 #include <functional>
-#include <unordered_map>
+
 
 
 typedef std::map<std::string, double> propMap;

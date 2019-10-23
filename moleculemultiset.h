@@ -1,9 +1,13 @@
+#include <unordered_map>
 #include <vector>
 #include <unordered_set>
 #include <set>
+#include <iostream>
+#include <random>
 
-typedef std::vector<std::string> molecule;
-typedef std::unordered_multiset<molecule*>   unorderedMultiset;
+typedef std::string molecule;
+typedef std::vector<molecule> moleculeVector;
+typedef std::unordered_map<molecule,int>   unorderedMultiset;
 
 
 class moleculeMultiset {

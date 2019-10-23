@@ -1,10 +1,8 @@
-
-#include <algorithm>
-#include <iostream>
-#include <chrono>
-#include <random>
 #include "fraglets.h"
-
+#include <chrono>
+#include <sstream>
+#include <iterator>
+#include <cstddef> 
 
 
 std::string match  = "match" ;
@@ -22,15 +20,35 @@ std::unordered_set<std::string> bimolTags = {match,matchp};
 std::unordered_set<std::string> unimolTags = {dup,exch,pop,nop,nul,split,send,fork};
 
 
+std::vector<std::string> moleculeToVector(std::string mol){
+    std::istringstream iss(mol);
+    std::vector<std::string> result{
+        std::istream_iterator<std::string>(iss), {}
+    };
+    return result;
+}
+
+molecule vectorToString(std::vector<std::string> vec){
+    std::ostringstream vts; 
+    std::copy(vec.begin(), vec.end()-1, 
+    std::ostream_iterator<std::string>(vts, " ")); 
+  
+    // Now add the last element with no delimiter 
+    vts << vec.back(); 
+    return vts.str();
+}
+
 
 
 opResult r_match(molecule activeMolecule, molecule passiveMolecule){
     opResult result;
-
+    moleculeVector activeMoleculeVector = moleculeToVector(activeMolecule);
+    moleculeVector passiveMoleculeVector = moleculeToVector(passiveMolecule);
+    moleculeVector newMoleculeVector;
     molecule newMol;
-    newMol = molecule();
-    newMol.insert(newMol.end(),activeMolecule.begin() + 2, passiveMolecule.end());
-    newMol.insert(newMol.end(),passiveMolecule.begin()+1,passiveMolecule.end());
+    newMoleculeVector.insert(newMoleculeVector.end(),activeMoleculeVector.begin() + 2, passiveMoleculeVector.end());
+    newMoleculeVector.insert(newMoleculeVector.end(),passiveMoleculeVector.begin()+1,passiveMoleculeVector.end());
+    newMol = molecule(vectorToString(newMoleculeVector));
     result[0] = newMol;
     return result;
 }
@@ -50,27 +68,30 @@ opResult r_matchp(molecule activeMolecule, molecule passiveMolecule){
 }
 
 opResult r_fork(molecule mol){
+    moleculeVector molv = moleculeToVector(mol);
     opResult result;
-    if (mol.size()<2) {return result;}
-    if (mol.size()<3) {
-        molecule newMol(mol.begin()+1,mol.end());
+    if (molv.size()<2) {return result;}
+    if (molv.size()<3) {
+        molecule newMol;
+        newMol = mol.substr(mol.front()+1,mol.back());
         result[0] = newMol;
         return result;
     } 
-    molecule mol1;
-    molecule mol2;
-    if (mol.size() < 4){
+    moleculeVector mol1;
+    moleculeVector mol2;
+    if (molv.size() < 4){
         mol1[0] = mol[1];
         mol2[0] = mol[2];
     }
     else{
-        mol1.insert(mol1.begin(),mol.begin()+1,mol.begin()+1);
-        mol1.insert(mol1.end(),mol.begin()+3,mol.end());
-        mol2.insert(mol2.begin(),mol.begin()+2,mol.end());
-        result.insert(result.begin(),mol1);
-        result.insert(result.end(),mol2);
+        mol1.insert(mol1.begin(),molv.begin()+1,molv.begin()+1);
+        mol1.insert(mol1.end(),molv.begin()+3,molv.end());
+        mol2.insert(mol2.begin(),molv.begin()+2,molv.end());
+
     }
-    
+    result.insert(result.begin(),vectorToString(mol1));
+    result.insert(result.end(),vectorToString(mol2));
+
     return result;
 }
 opResult r_dup(molecule mol){
@@ -111,8 +132,8 @@ opResult r_pop(molecule mo){
 
 
 
-std::unordered_map<std::string,bimolOp> bimolMap = {{match,r_match},{matchp,r_matchp}};
-std::unordered_map<std::string,unimolOp> unimolMap = {{dup,r_dup},
+std::unordered_map<std::string,bimolOp>  const bimolMap = {{match,r_match},{matchp,r_matchp}};
+std::unordered_map<std::string,unimolOp> const unimolMap = {{dup,r_dup},
                                                       {exch,r_exch},
                                                       {pop,r_pop},
                                                       {nop,r_nop},
@@ -135,44 +156,57 @@ double random_double(){
     return unif(rng);
 }
 
-void fraglets::inject(molecule molecule,int mult){
+void fraglets::inject(molecule mole,int mult){
+    moleculeVector moleVector = moleculeToVector(mole);
 
-    if (molecule.empty() | mult < 1){return;}
-    if (molecule.size() >1){
-        if (this->isbimol(molecule)){
-                std::string key = molecule[1];
+    if (moleVector.empty() | mult < 1){return;}
+    if (moleVector.size() >1){
+        if (this->isbimol(mole)){
+                std::string key = moleVector[1];
                 // could check for invalid fraglets here.
-                this->active.inject(key,molecule,mult);
+                this->active.inject(key,mole,mult);
                 this->idle = false;
             }
-        else if (this->isunimol(molecule)){
+        else if (this->isunimol(mole)){
             for (int i = 0; i<mult;i++){
-                this->unimol.inject(molecule,mult);
+                this->unimol.inject(mole,mult);
             }
         }
         else{
-            std::string key = molecule[1];
+            std::string key = moleVector[1];
             // could check for invalid fraglets here.
-            this->passive.inject(key,molecule,mult);
+            this->passive.inject(key,mole,mult);
             this->idle = false;
         }
     }
 }   
 bool fraglets::isbimol(molecule molecule){
     if (molecule.empty()){ return false;}
-    std::string head = molecule[0];
-    return head == match | head == matchp;
+
+
+    auto res = std::mismatch(match.begin(),match.end(),molecule.begin());
+    if (res.first == match.end()){
+        return true;
+    }
+    auto res2 = std::mismatch(matchp.begin(),matchp.end(),molecule.begin());
+    if (res.first == match.end()){
+        return true;
+    }
+    return false;
 }
-bool fraglets::isunimol(molecule molecule){
-    if (molecule.empty()){ return false;}
-    std::string head = molecule[0];
-    return unimolTags.find(head) != unimolTags.end() & !this->isbimol(molecule);
+bool fraglets::isunimol(molecule mole){
+    if (mole.empty()){ return false;}
+    size_t found;
+    found = mole.find(" ");
+    molecule head = mole.substr(0,found);
+    return unimolTags.find(head) != unimolTags.end() & !this->isbimol(mole);
 }
 
 double fraglets::propensity(){
     this->run_unimol();
     this->prop.clear();
     this->wt = 0;
+    std::cout << "test2";
     keyMultisetMap::iterator it = this->active.keyMap.begin();
     std::cout << "propensity" << this->active.keyMap.size();
     for (;it != this->active.keyMap.end();it++){
@@ -214,7 +248,9 @@ void fraglets::react(double w){
 }
 
 opResult fraglets::react1(molecule mol){
-    std::string tag = mol[0];
+    size_t found = mol.find(" ");
+
+    std::string tag = mol.substr(0,found);
     opResult result;
     unimolOp f = unimolMap.find(tag)->second;
     result = f(mol);
@@ -222,7 +258,9 @@ opResult fraglets::react1(molecule mol){
 }
 
 opResult fraglets::react2(molecule activeMolecule,molecule passiveMolecule ){
-    std::string tag = activeMolecule[0];
+    size_t found = activeMolecule.find(" ");
+
+    std::string tag = activeMolecule.substr(0,found);
     opResult result;
     bimolOp f = bimolMap.find(tag)->second;
     result = f(activeMolecule,passiveMolecule);
@@ -233,9 +271,11 @@ int fraglets::run_unimol(){
     int n = 0;
 
     while (!this->unimol.multiset.empty()){
-        std::cout << this->unimol.multiset.size();
         molecule mol = this->unimol.expelrnd();
         opResult result = this->react1(mol);
+        for (opResult::iterator it = result.begin();it!=result.end();it++){
+            std::cout << *it << "\n";
+        }
         this->inject_list(result);
         n++;
     }
@@ -244,7 +284,6 @@ int fraglets::run_unimol(){
 
 
 void fraglets::run_bimol(){
-    std::cout << "test";
     std::cout << this->wt;
     if (this->wt <= 0){return;}
     double w = random_double() * this->wt;
@@ -263,6 +302,7 @@ void fraglets::inject_list(opResult result){
 
 
 void fraglets::iterate(){
+    std::cout << "iterate";
     this->propensity();
     if (!this->idle){
         this->run_bimol();

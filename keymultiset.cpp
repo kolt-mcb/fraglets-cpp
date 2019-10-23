@@ -21,6 +21,7 @@ void keyMultiset::expel(std::string key, molecule mol, int mult){
     else{
         keyMultisetMap::iterator it = this->keyMap.find(key);
         if (it != this->keyMap.end()){
+            std::cout << "expel";
             moleculeMultiset mset =  *it->second;
             int total = mset.expel(mol,mult);
             }
