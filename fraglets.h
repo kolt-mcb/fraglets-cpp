@@ -38,7 +38,7 @@ class fraglets {
         moleculeMultiset unimol;
         // ops ops;
         propMap prop;
-        double wt;
+        int wt;
         bool idle;
     public:
         void inject(molecule mol,int mult=1);

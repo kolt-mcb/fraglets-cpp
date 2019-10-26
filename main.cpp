@@ -38,10 +38,10 @@ int main() {
 
 
     fraglets frag;
-    molecule mol = {"fork nop x match x fork nop x"};
+    molecule mol = {"fork nop x match x exch fork nop x"};
     frag.inject(mol);
 
-    frag.run(50);
+    frag.run(500000);
 
   
 

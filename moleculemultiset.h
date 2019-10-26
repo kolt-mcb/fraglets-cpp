@@ -7,7 +7,7 @@
 
 typedef std::string molecule;
 typedef std::vector<molecule> moleculeVector;
-typedef std::unordered_map<molecule,int>   unorderedMultiset;
+typedef std::unordered_multiset<molecule>   unorderedMultiset;
 
 
 class moleculeMultiset {

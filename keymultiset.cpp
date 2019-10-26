@@ -5,14 +5,14 @@
 void keyMultiset::inject(std::string key, molecule mol, int mult){
     if (key.empty() or mol.empty()){return;}
     keyMultisetMap::iterator it = this->keyMap.find(key);
-    moleculeMultiset mset;
+    moleculeMultiset* mset;
     if (it == this->keyMap.end()){
-        mset = moleculeMultiset();
-        this->keyMap[key] = &mset;
+        mset = new moleculeMultiset();
+        this->keyMap[key] = mset;
     }else{
-        mset = *it->second;
+        mset = it->second;
     }
-    mset.inject(mol,mult);
+    mset->inject(mol,mult);
 
 }
 
@@ -21,7 +21,6 @@ void keyMultiset::expel(std::string key, molecule mol, int mult){
     else{
         keyMultisetMap::iterator it = this->keyMap.find(key);
         if (it != this->keyMap.end()){
-            std::cout << "expel";
             moleculeMultiset mset =  *it->second;
             int total = mset.expel(mol,mult);
             }
@@ -30,13 +29,14 @@ void keyMultiset::expel(std::string key, molecule mol, int mult){
 
 molecule keyMultiset::rndmol(std::string key){
     keyMultisetMap::iterator it = this->keyMap.find(key);
-    if (it != this->keyMap.end()){
+    // if (it != this->keyMap.end()){
         moleculeMultiset mset = *it->second;
-        mset.rndMol();
-    }
+        return mset.rndMol();
+    // }
 }
 molecule keyMultiset::expelrnd(std::string key){
-    molecule mol;
+    molecule mol = this->rndmol(key);
+    this->expel(key,mol);
     return mol;
 };
 int mult(std::string molecule);
