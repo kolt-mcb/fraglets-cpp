@@ -6,6 +6,10 @@
 #include <vector> 
 
 #include <functional>
+#include <QtWidgets/QApplication>
+#include <QtWidgets/QMainWindow>
+#include <QtCharts/QChartView>
+#include <QtCharts/QLineSeries>
 
 
 
@@ -27,6 +31,9 @@ extern std::string nul;
 extern std::string split;
 extern std::string send;
 extern std::string fork;
+extern std::string empty;
+extern std::string length;
+extern std::string lt;
 
 extern std::unordered_set<std::string> bimolTags;
 extern std::unordered_set<std::string> unimolTags;
@@ -40,21 +47,27 @@ class fraglets {
         propMap prop;
         int wt;
         bool idle;
+
     public:
-        void inject(molecule mol,int mult=1);
+        void inject(const molecule& mol,int mult=1);
         double propensity();
         int run_unimol();
-        bool isbimol(molecule mol);
-        bool isunimol(molecule mol);
+        bool isbimol(const molecule& mol);
+        bool isunimol(const molecule& mol);
         void react(double w);
-        opResult react1(molecule molecule);
-        std::vector<molecule> react2(molecule activeMolecule ,molecule passiveMolecule);
+        opResult react1(const molecule& mol);
+        opResult react2(const molecule& activeMolecule ,const molecule& passiveMolecule);
         void inject_list(opResult);
         void iterate();
         void run(int niter);
         bool inert();
         void run_bimol();
-        
+        void show_plot();
+        std::vector<int> activeMultisetSize;
+        std::vector<int> passiveMultisetSize;
+        void parse(std::string line);
+        void interpret(std::string filename);
+        void trace();
 
 };
 

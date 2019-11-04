@@ -2,8 +2,8 @@
 
 
 
-void keyMultiset::inject(std::string key, molecule mol, int mult){
-    if (key.empty() or mol.empty()){return;}
+void keyMultiset::inject(std::string key, const molecule& mol, int mult){
+    if ((key.empty()) or (mol.empty())){return;}
     keyMultisetMap::iterator it = this->keyMap.find(key);
     moleculeMultiset* mset;
     if (it == this->keyMap.end()){
@@ -13,17 +13,18 @@ void keyMultiset::inject(std::string key, molecule mol, int mult){
         mset = it->second;
     }
     mset->inject(mol,mult);
-
+    this->total += mult;
 }
 
-void keyMultiset::expel(std::string key, molecule mol, int mult){
-    if (key.empty() or mult < 0){ return;}
+void keyMultiset::expel(std::string key, const molecule& mol, int mult){
+    if ((key.empty()) or (mult < 0)){ return;}
     else{
         keyMultisetMap::iterator it = this->keyMap.find(key);
         if (it != this->keyMap.end()){
-            moleculeMultiset mset =  *it->second;
-            int total = mset.expel(mol,mult);
-            }
+            moleculeMultiset* mset =  it->second;
+            int total = mset->expel(mol,mult);
+            this->total -= total;
+        }
     }
 }
 
@@ -34,17 +35,30 @@ molecule keyMultiset::rndmol(std::string key){
         return mset.rndMol();
     // }
 }
+
 molecule keyMultiset::expelrnd(std::string key){
     molecule mol = this->rndmol(key);
     this->expel(key,mol);
     return mol;
 };
-int mult(std::string molecule);
-int multk(std::string key);
+
+// int mult(std::string molecule){
+
+// };
+int keyMultiset::multk(std::string key){
+    // moleculeMultiset m = *this->keyMap[key];
+    // std::cout << key << " while\n" ;
+    keyMultisetMap::iterator it = this->keyMap.find(key);
+    if (it!=this->keyMap.end()){
+        moleculeMultiset mset =  *it->second;
+
+        return mset.mult();
+    }else
+    {   
+        return 0;
+    }
+    // return m.mult();
+    
+};
 int nspecies();
 
-
-//   def rndmol( self, key ):
-//         """ peek at a random molecule with given key, without removing it """
-//         if (key not in self.keymset): return ''
-//         return self.keymset[key].rndmol()

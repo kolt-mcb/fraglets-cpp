@@ -13,11 +13,13 @@ typedef std::unordered_multiset<molecule>   unorderedMultiset;
 class moleculeMultiset {
 
     public:
-        void inject(molecule molecule, int mul);
-        int expel(molecule mol, int mult);
-        molecule expelrnd(molecule mol);
+        void inject(const molecule& mol, int mul);
+        int expel(const molecule& mol, int mult);
+        molecule expelrnd(const molecule& mol);
         molecule rndMol();
         molecule expelrnd();
+        int mult(molecule mol);
+        int mult();
         unorderedMultiset multiset;
 
 };
