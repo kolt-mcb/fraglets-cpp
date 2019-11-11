@@ -5,6 +5,10 @@
 #include <iostream>
 #include <random>
 
+
+int rand_between(int begin, int end);
+
+
 typedef std::string molecule;
 typedef std::vector<molecule> moleculeVector;
 typedef std::unordered_multiset<molecule>   unorderedMultiset;
