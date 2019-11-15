@@ -24,8 +24,9 @@
 //     cout << endl;
 // }
 
+// std::string alphabet = {"abcdefghijklmnopqrstuvwxyz!@#$%^&*():,.{}-=_+`~<>?/"};
 
-
+std::string alphabet = {"abcdefghijklmnzx*"};
 
 
 int main(int argc, char *argv[]) {
@@ -51,58 +52,73 @@ int main(int argc, char *argv[]) {
     // series->append(10, 5);
     // *series << QPointF(11, 1) << QPointF(13, 3) << QPointF(17, 6) << QPointF(18, 3) << QPointF(20, 2);
 
-
     fraglets frag;
     molecule mol = {"fork nop x match z split match x fork fork fork nop x * split match x fork fork fork nop x * copy z"};
     molecule moll = {"fork nop z match x split match z fork fork fork nop z * split match z fork fork fork nop z * copy x"};
-    for (int i = 0; i< 10; i++){
+    // molecule molll = {"fork nop a match b split match a fork fork fork nop a * split match a fork fork fork nop a * copy b"};
+    for (int i = 0; i< 100; i++){
         frag.inject(mol);
-        // frag.inject(moll);
-        frag.inject({"y"});
+        frag.inject(moll);
+        // frag.inject(molll);
+        frag.inject({"z"});
+        frag.inject({"x"});
+        // frag.inject({"b"});
     }
 
-    std::unordered_set<std::string>::iterator it;
+    // std::unordered_set<std::string>::iterator it;
 
-    for (it = unimolTags.begin();it!=unimolTags.end();it++){
-        molecule mol1 = {"matchp z "};
-        molecule mol2 = {"matchp z z "};
-        molecule mol4 = {"matchp z z z "};
-        molecule mol3 = {"z"};
-        mol1.append(*it);
-        mol2.append(*it);
-        mol4.append(*it);
-        frag.inject(mol1);
-        frag.inject(mol2);
-        frag.inject(mol3);
-        frag.inject(mol4);
+    // for (it = unimolTags.begin();it!=unimolTags.end();it++){
+    //     molecule mol1 = {"matchp z "};
+    //     molecule mol2 = {"matchp z z "};
+    //     molecule mol4 = {"matchp z z z "};
+    //     molecule mol3 = {"z"};
+    //     mol1.append(*it);
+    //     mol2.append(*it);
+    //     mol4.append(*it);
+    //     frag.inject(mol1);
+    //     frag.inject(mol2);
+    //     frag.inject(mol3);
+    //     frag.inject(mol4);
+    // }
+    
+    molecule mol2 = {"matchp z "};
+    std::string::iterator alphaIt;
+    std::unordered_set<std::string>::iterator uIt;
+    for (alphaIt = alphabet.begin();alphaIt!=alphabet.end();alphaIt++){
+        molecule newMol = mol2 + *alphaIt;
+        frag.inject(newMol);
+        newMol = mol2 + "z " + *alphaIt;
+        frag.inject(newMol);
+        for (uIt = unimolTags.begin();uIt!=unimolTags.end();uIt++){
+
+            molecule newMolTag = mol2  + *uIt;
+            frag.inject(newMolTag);
+            newMolTag = mol2 + "z " +*uIt;
+            frag.inject(newMolTag);
+        }
     }
-    frag.inject({"matchp x match"});
-    frag.inject({"matchp x c"});
-    frag.inject({"matchp x v"});
-    frag.inject({"matchp x b"});
-    frag.inject({"matchp x n"});
-    frag.inject({"matchp x m"});
-    frag.inject({"matchp x x match"});
-    frag.inject({"matchp x x x"});
-    frag.inject({"matchp z match"});
-    frag.inject({"matchp z z match"});
-    frag.inject({"matchp z z z"});
-    frag.inject({"matchp z c"});
-    frag.inject({"matchp z v"});
-    frag.inject({"matchp z b"});
-    frag.inject({"matchp z n"});
-    frag.inject({"matchp z m"});
-    // frag.inject({"matchp x y z"});
-    // frag.inject({"matchp x y x"});
-    // frag.inject({"matchp x y c"});
-    // frag.inject({"matchp x y v"});
-    // frag.inject({"matchp x y b"});
-    // frag.inject({"matchp x y n"});
-    // frag.inject({"matchp x y m"});
+    for (alphaIt = alphabet.begin();alphaIt!=alphabet.end();alphaIt++){
+        molecule newMol2 = mol2 + "match " + *alphaIt;
+        frag.inject(newMol2);
+        newMol2 = mol2 + "z " + "match " + *alphaIt;
+        frag.inject(newMol2);
+
+
+    }
+    // for (alphaIt = alphabet.begin();alphaIt!=alphabet.end();alphaIt++){
+    //     molecule newMol2 = mol2 + "z " + "match " + *alphaIt;
+    //     frag.inject(newMol2);
+
+
+    // }
+
+
+
+
 
     // frag.interpret("sort.fra");
 
-    frag.run(10000000,250);
+    frag.run(20000,10000);
 
     
     for (int j = 0;j< frag.activeMultisetSize.size();j++){

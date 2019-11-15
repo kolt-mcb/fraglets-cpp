@@ -53,6 +53,7 @@ class fraglets {
         Agraph_t* graph = agopen("G", Agdirected, NULL);
         Agraph_t* subgraph = agsubg(graph, "cluster", 1);
         std::map <molecule,Agnode_t*> nodesTable;
+        moleculeMultiset reactionCoutTable;
 
 
     public:

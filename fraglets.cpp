@@ -56,7 +56,13 @@ Agnode_t* fraglets::addNode(molecule mol){
         node =  agnode(this->graph,c_mol,TRUE);
         agsafeset(node,"shape","circle","circle");
     }
-    
+    if(isunimol(mol)){
+        agsafeset(node,"color","blue","blue");
+    }
+    if(isbimol(mol)){
+        agsafeset(node,"color","red","red");
+    }
+    agsafeset(node,"penwidth","10","10");
     this->nodesTable[mol] = node;
     return node;
 }
@@ -85,8 +91,16 @@ void fraglets::addEdge(molecule mol, molecule resultMol,bool unimol,bool matchp)
     }else{
         agsafeset(edge,"color","black","black");
     }
-    agsafeset(edge,"weight","30","30");
-    agsafeset(edge,"penwidth","30","30");
+
+    this->reactionCoutTable.inject(mol,1);
+    int reactionCount = this->reactionCoutTable.mult("")/this->reactionCoutTable.mult(mol);
+    if (reactionCount > 100){
+        reactionCount = 100;
+    }
+    std::string s = std::to_string(reactionCount);
+    char  *weight = const_cast<char *>(s.c_str()); 
+    agsafeset(edge,"weight",weight,weight);
+    agsafeset(edge,"penwidth",weight,weight);
     
 }
 
@@ -589,7 +603,6 @@ void fraglets::react(double w){
                     opResult::iterator rIt = result.begin();
                     for (;rIt!=result.end();rIt++){
                         molecule rMol = *rIt;
-
                         this->addEdge(activeMolecule,rMol,false,isMatchp(activeMolecule));
                         this->addEdge(passiveMolecule,rMol,false,false);
                     }
