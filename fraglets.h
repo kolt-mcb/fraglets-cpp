@@ -77,7 +77,7 @@ class fraglets {
         void parse(std::string line);
         void interpret(std::string filename);
         void trace();
-        Agnode_t* addNode(molecule mol);
+        void addNode(molecule mol);
         void addEdge(molecule activeMoleule, molecule passiveMolecule, bool unimol,bool matchp);
 
         

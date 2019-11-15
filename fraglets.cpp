@@ -43,7 +43,7 @@ std::unordered_set<std::string> unimolTags = {exch,pop,nop,split,fork,empty,leng
 
 
 
-Agnode_t* fraglets::addNode(molecule mol){
+void fraglets::addNode(molecule mol){
     char* c_mol = new char[mol.length() + 1];
     // mol.copy(c_mol,mol.size(),mol.front());
     std::copy(mol.begin(),mol.end(),c_mol);
@@ -64,22 +64,17 @@ Agnode_t* fraglets::addNode(molecule mol){
     }
     agsafeset(node,"penwidth","10","10");
     this->nodesTable[mol] = node;
-    return node;
 }
 
 void fraglets::addEdge(molecule mol, molecule resultMol,bool unimol,bool matchp){
-    if (isbimol(resultMol)){return;}
+
     char *c_mol = const_cast<char *>(mol.c_str());
     char *c_result_mol = const_cast<char *>(resultMol.c_str());
     if (this->nodesTable.find(mol) == this->nodesTable.end()){
-        Agnode_t* headNode = this->addNode(mol);
-    }else{
-        Agnode_t* headNode = nodesTable[mol];
+        this->addNode(mol);
     }
     if (this->nodesTable.find(resultMol) == this->nodesTable.end()){
-        Agnode_t* tailNode = this->addNode(resultMol);
-    }else{
-        Agnode_t* tailNode = nodesTable[resultMol];
+        this->addNode(resultMol);
     }
     Agnode_t* tailNode = nodesTable[resultMol];
     Agnode_t* headNode = nodesTable[mol];
@@ -94,8 +89,8 @@ void fraglets::addEdge(molecule mol, molecule resultMol,bool unimol,bool matchp)
 
     this->reactionCoutTable.inject(mol,1);
     int reactionCount = this->reactionCoutTable.mult("")/this->reactionCoutTable.mult(mol);
-    if (reactionCount > 100){
-        reactionCount = 100;
+    if (reactionCount > 75){
+        reactionCount = 75;
     }
     std::string s = std::to_string(reactionCount);
     char  *weight = const_cast<char *>(s.c_str()); 
@@ -601,11 +596,6 @@ void fraglets::react(double w){
                     molecule passiveMolecule = this->passive.expelrnd(key);
                     opResult result = this->react2(activeMolecule,passiveMolecule);
                     opResult::iterator rIt = result.begin();
-                    for (;rIt!=result.end();rIt++){
-                        molecule rMol = *rIt;
-                        this->addEdge(activeMolecule,rMol,false,isMatchp(activeMolecule));
-                        this->addEdge(passiveMolecule,rMol,false,false);
-                    }
                     this->inject_list(result);
                     return;
             }
@@ -634,9 +624,15 @@ opResult fraglets::react2(const molecule& activeMolecule,const molecule& passive
     result = f(activeMolecule,passiveMolecule);
     if (result.size() == 1){
         std::cout << "[ " <<activeMolecule << " ] , [ " << passiveMolecule << " ] -> \n[ " << result[0] << " ]\n";
+        this->addEdge(activeMolecule,result[0],false,isMatchp(activeMolecule));
+        this->addEdge(activeMolecule,result[0],false,isMatchp(activeMolecule));
     }
     if (result.size() == 2){
-        std::cout << "[ " <<activeMolecule << " ] , [ " << passiveMolecule << " ] -> \n[ " << result[0] << " ] , [ " << result[1] << " ]\n" ;
+        std::cout << "[ " <<activeMolecule << " ] , [ " << passiveMolecule << " ] -> \n[ " << result[0] << " ] , [ " << result[1] << " ]\n";
+        this->addEdge(activeMolecule,result[0],false,isMatchp(activeMolecule));
+        this->addEdge(activeMolecule,result[1],false,isMatchp(activeMolecule));
+        this->addEdge(passiveMolecule,result[0],false,isMatchp(activeMolecule));
+        this->addEdge(passiveMolecule,result[1],false,isMatchp(activeMolecule));
     }
     return result;
 }
@@ -653,7 +649,7 @@ int fraglets::run_unimol(){
         if (result.size() == 2){
             std::cout << "[ " << mol << " ] ->\n[ " << result[0] << " ] , [ " << result[1] << " ]\n" ;
             this->addEdge(mol,result[0],true,false);
-            this->addEdge(mol,result[1],true,false);      
+            this->addEdge(mol,result[1],true,false);
         }
       
         this->inject_list(result);

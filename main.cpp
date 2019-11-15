@@ -1,29 +1,6 @@
 #include "fraglets.h"
 
 
-
-// typedef unordered_multiset<unordered_multiset<string>*>  nested_unordered_multiset;
-// typedef unordered_multiset<string>   string_unordered_multiset;
-
-// nested_unordered_multiset testset1;
-// string_unordered_multiset testset2 = {"test","test","test2"};
-
-// typedef unordered_multiset<unordered_multiset<string>*>::iterator numit;
-// typedef unordered_multiset<string>::iterator umit;
-
-// void printUset(nested_unordered_multiset ums)
-// {
-//     //  begin() returns iterator to first element of set
-//     numit it = ums.begin();
-//     for (; it != ums.end(); it++){
-//         umit nested_iterator = (*it)->begin();
-//         for (; nested_iterator != (*it)->end(); nested_iterator++ ){
-//             cout << *nested_iterator << "";
-//         }
-//     }
-//     cout << endl;
-// }
-
 // std::string alphabet = {"abcdefghijklmnopqrstuvwxyz!@#$%^&*():,.{}-=_+`~<>?/"};
 
 std::string alphabet = {"abcdefghijklmnzx*"};
@@ -118,7 +95,7 @@ int main(int argc, char *argv[]) {
 
     // frag.interpret("sort.fra");
 
-    frag.run(20000,10000);
+    frag.run(5000,2000);
 
     
     for (int j = 0;j< frag.activeMultisetSize.size();j++){
