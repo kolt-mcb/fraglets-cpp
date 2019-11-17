@@ -1,9 +1,4 @@
 #include "fraglets.h"
-#include <QtWidgets/QApplication>
-#include <QtQml/QQmlContext>
-#include <QtQuick/QQuickView>
-#include <QtQml/QQmlEngine>
-#include <QtCore/QDir>
 
 
 // std::string alphabet = {"abcdefghijklmnopqrstuvwxyz!@#$%^&*():,.{}-=_+`~<>?/"};
@@ -14,44 +9,25 @@ std::string alphabet = {"abcdefghijklmnzx*"};
 int main(int argc, char *argv[]) {
 
 
-
-
-
-        // Qt Charts uses Qt Graphics View Framework for drawing, therefore QApplication must be used.
-    QApplication app(argc, argv);
-
-    QQuickView viewer;
-
-    // The following are needed to make examples run without having to install the module
-    // in desktop environments.
-#ifdef Q_OS_WIN
-    QString extraImportPath(QStringLiteral("%1/../../../../%2"));
-#else
-    QString extraImportPath(QStringLiteral("%1/../../../%2"));
-#endif
-    viewer.engine()->addImportPath(extraImportPath.arg(QGuiApplication::applicationDirPath(),
-                                      QString::fromLatin1("qml")));
-    QObject::connect(viewer.engine(), &QQmlEngine::quit, &viewer, &QWindow::close);
-
-    viewer.setTitle(QStringLiteral("QML Oscilloscope"));
-
-    DataSource dataSource(&viewer);
-    viewer.rootContext()->setContextProperty("dataSource", &dataSource);
-
-    viewer.setSource(QUrl("qrc:/qml/qmloscilloscope/main.qml"));
-    viewer.setResizeMode(QQuickView::SizeRootObjectToView);
-    viewer.setColor(QColor("#404040"));
-    viewer.show();
-
-
-
+    // testset1.insert(&testset2);
+    // // std:cout << testset1.count(&testset2);
+    // // printUset(testset1);
+    // cout << testset2.count("tes23123t") << "";
     QApplication a(argc, argv);
 
     
     QtCharts::QLineSeries *series = new QtCharts::QLineSeries();
     QtCharts::QLineSeries *series2 = new QtCharts::QLineSeries();
+//![1]
 
+//![2]
 
+    // series->append(0, 6);
+    // series->append(2, 4);
+    // series->append(3, 8);
+    // series->append(7, 4);
+    // series->append(10, 5);
+    // *series << QPointF(11, 1) << QPointF(13, 3) << QPointF(17, 6) << QPointF(18, 3) << QPointF(20, 2);
 
     fraglets frag;
     molecule mol = {"fork nop x match z split match x fork fork fork nop x * split match x fork fork fork nop x * copy z"};
@@ -66,7 +42,21 @@ int main(int argc, char *argv[]) {
         // frag.inject({"b"});
     }
 
+    // std::unordered_set<std::string>::iterator it;
 
+    // for (it = unimolTags.begin();it!=unimolTags.end();it++){
+    //     molecule mol1 = {"matchp z "};
+    //     molecule mol2 = {"matchp z z "};
+    //     molecule mol4 = {"matchp z z z "};
+    //     molecule mol3 = {"z"};
+    //     mol1.append(*it);
+    //     mol2.append(*it);
+    //     mol4.append(*it);
+    //     frag.inject(mol1);
+    //     frag.inject(mol2);
+    //     frag.inject(mol3);
+    //     frag.inject(mol4);
+    // }
     
     molecule mol2 = {"matchp z "};
     std::string::iterator alphaIt;
@@ -97,16 +87,27 @@ int main(int argc, char *argv[]) {
     //     frag.inject(newMol2);
 
 
-    frag.run(5000,1100);
+    // }
+
+
+
+
+
+    // frag.interpret("sort.fra");
+
+    frag.run(5000,2000);
 
     
     for (int j = 0;j< frag.activeMultisetSize.size();j++){
+        // std::cout <<j << " " << frag.activeMultisetSize[j]<<'\n';
         series->append(j,frag.activeMultisetSize[j]);
 
     }
 
     for (int j = 0;j< frag.passiveMultisetSize.size();j++){
+        // std::cout <<j << " " << frag.passiveMultisetSize[j]<<'\n';
         series2->append(j,frag.passiveMultisetSize[j]);
+
     }
 
 
