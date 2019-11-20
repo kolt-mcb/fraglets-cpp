@@ -39,7 +39,7 @@ bool isNumber(const molecule& mol){
 
 
 std::unordered_set<std::string> bimolTags = {match,matchp};
-std::unordered_set<std::string> unimolTags = {exch,pop,nop,split,fork,empty,length,lt,pop2,copy};
+std::unordered_set<std::string> unimolTags = {exch,pop,nop,split,fork,empty,pop2,copy};
 
 
 
@@ -83,20 +83,11 @@ void fraglets::addEdge(molecule mol, molecule resultMol,bool unimol,bool matchp)
         agsafeset(edge,"color","blue","blue");
     }else if (matchp){
         agsafeset(edge,"color","green","green");
+        agsafeset(edge,"dir","none","none");
     }else{
         agsafeset(edge,"color","black","black");
     }
-
-    this->reactionCoutTable.inject(mol,1);
-    int reactionCount = this->reactionCoutTable.mult("")/this->reactionCoutTable.mult(mol);
-    if (reactionCount > 75){
-        reactionCount = 75;
-    }
-    std::string s = std::to_string(reactionCount);
-    char  *weight = const_cast<char *>(s.c_str()); 
-    agsafeset(edge,"weight",weight,weight);
-    agsafeset(edge,"penwidth",weight,weight);
-    
+    this->edgeTable[mol] = edge;
 }
 
 
@@ -461,13 +452,13 @@ std::unordered_map<std::string,unimolOp> const unimolMap = {{dup,r_dup},
                                                       {exch,r_exch},
                                                       {pop,r_pop},
                                                       {nop,r_nop},
-                                                      {nul,r_nul},
+                                                    //   {nul,r_nul},
                                                       {split,r_split},
-                                                      {send,r_send},
+                                                    //   {send,r_send},
                                                       {fork,r_fork},
                                                       {empty,r_empty},
-                                                      {length,r_length},
-                                                      {lt,r_lessthan},
+                                                    //   {length,r_length},
+                                                    //   {lt,r_lessthan},
                                                       {pop,r_pop},
                                                       {pop2, r_pop2},
                                                       {copy,r_copy}
@@ -625,14 +616,15 @@ opResult fraglets::react2(const molecule& activeMolecule,const molecule& passive
     if (result.size() == 1){
         std::cout << "[ " <<activeMolecule << " ] , [ " << passiveMolecule << " ] -> \n[ " << result[0] << " ]\n";
         this->addEdge(activeMolecule,result[0],false,isMatchp(activeMolecule));
-        this->addEdge(activeMolecule,result[0],false,isMatchp(activeMolecule));
+        this->addEdge(passiveMolecule,result[0],false,false);
+
     }
     if (result.size() == 2){
         std::cout << "[ " <<activeMolecule << " ] , [ " << passiveMolecule << " ] -> \n[ " << result[0] << " ] , [ " << result[1] << " ]\n";
         this->addEdge(activeMolecule,result[0],false,isMatchp(activeMolecule));
         this->addEdge(activeMolecule,result[1],false,isMatchp(activeMolecule));
-        this->addEdge(passiveMolecule,result[0],false,isMatchp(activeMolecule));
-        this->addEdge(passiveMolecule,result[1],false,isMatchp(activeMolecule));
+        this->addEdge(passiveMolecule,result[0],false,false);
+        this->addEdge(passiveMolecule,result[1],false,false);
     }
     return result;
 }
@@ -671,6 +663,7 @@ void fraglets::inject_list(opResult result){
     for (;it!=result.end();it++){
         molecule mol = *it;
         this->inject(mol);
+        this->reactionCoutTable.inject(mol,1);
     }
 }
 
@@ -693,6 +686,66 @@ void fraglets::run(int niter,int molCap){
         this->iterate();
         int total = this->active.total + this->passive.total;
 
+
+
+        std::map<molecule,int> molCountMap;
+
+
+        for (auto activeKey :this->active.keyMap){
+            moleculeMultiset mset = *activeKey.second;
+            for (auto mol : mset.multiset){
+                int mult = mset.mult(mol);
+                auto mapMolIt = this->mappedMols.find(mol);
+                if (mapMolIt == this->mappedMols.end()){
+                    this->stackplotIndexMap[this->stackplotIndexCounter] = mol;
+                    this->mappedMols.insert(mol);
+                    this->stackplotIndexCounter += 1;
+                }
+                molCountMap[mol] = mult;
+            }
+        }
+        for (auto passiveKey :this->passive.keyMap){
+            moleculeMultiset mset = *passiveKey.second;
+            for (auto mol : mset.multiset){
+                int mult = mset.mult(mol);
+                auto mapMolIt = this->mappedMols.find(mol);
+                if (mapMolIt == this->mappedMols.end()){
+                    this->stackplotIndexMap[this->stackplotIndexCounter] = mol;
+                    this->mappedMols.insert(mol);
+                    this->stackplotIndexCounter += 1;
+                }
+                molCountMap[mol] = mult;
+            }
+        }
+        for (auto unimol :this->unimol.multiset){
+            int mult = this->unimol.mult(unimol);
+            auto mapMolIt = this->mappedMols.find(unimol);
+            if (mapMolIt == this->mappedMols.end()){
+                this->stackplotIndexMap[this->stackplotIndexCounter] = unimol;
+                this->mappedMols.insert(unimol);
+                this->stackplotIndexCounter += 1;
+            }
+            molCountMap[unimol] = mult;
+        
+        }
+
+
+        while (this->stackplotIndexCounter > this->StackplotVector.size()){
+            std::vector<int> molvec;
+            this->StackplotVector.push_back(molvec);
+        }
+        for(auto mappedMol : stackplotIndexMap){
+            molecule mol = mappedMol.second;
+            int mult = molCountMap[mol];
+            this->StackplotVector[mappedMol.first].push_back(mult);
+        }
+        for (auto vIt : this->StackplotVector){
+            while (vIt.size() < this->stackplotIndexCounter ){
+                vIt.push_back(0);
+            }
+        }
+
+
         while (total > molCap){
             int n = rand() % 2;
             if (n){
@@ -711,12 +764,28 @@ void fraglets::run(int niter,int molCap){
                 total = this->active.total + this->passive.total;
         }
         if (this->idle){
+
+
+            for(auto edge : this->edgeTable){
+                int reactionCount = ((this->reactionCoutTable.mult("")/this->reactionCoutTable.mult(edge.first))/150)+1;
+                std::cout<<reactionCount<<'\n';
+                if (reactionCount > 150){
+                    reactionCount = 150;
+                }
+                std::string s = std::to_string(reactionCount);
+                char  *weight = const_cast<char *>(s.c_str()); 
+                agsafeset(edge.second,"weight",weight,weight);
+                agsafeset(edge.second,"penwidth",weight,weight);
+            }
+
             GVC_t* graphContext = gvContext();
 
             gvLayout(graphContext,this->graph,"dot");
-            char* args[] = {
-            };
-            gvParseArgs (graphContext, sizeof(args)/sizeof(char*), args);
+            // char* args[] = {
+            //     "-Gconcentrate=true"
+            // };
+            // gvParseArgs (graphContext, sizeof(args)/sizeof(char*), args);
+            agsafeset(this->graph,"concentrate","true","true");
             gvRenderFilename(graphContext,this->graph,"pdf","fraglets_map.pdf");
             gvRenderFilename(graphContext,this->graph,"dot","fraglets_map.dot");
             gvFreeLayout(graphContext, this->graph);
@@ -727,9 +796,21 @@ void fraglets::run(int niter,int molCap){
         }
 
     }
+    int total = this->reactionCoutTable.mult("");
+    for(auto edge : this->edgeTable){
+        int reactionCount = total/(this->reactionCoutTable.mult(edge.first));
+        if (reactionCount > 150){
+            reactionCount = 150;
+        }
+        std::string s = std::to_string(reactionCount);
+        char  *weight = const_cast<char *>(s.c_str()); 
+        agsafeset(edge.second,"weight",weight,weight);
+        agsafeset(edge.second,"penwidth",weight,weight);
+    }
     GVC_t* graphContext = gvContext();
 
     gvLayout(graphContext,this->graph,"dot");
+    agsafeset(this->graph,"concentrate","true","true");
     gvRenderFilename(graphContext,this->graph,"pdf","fraglets_map.pdf");
     gvRenderFilename(graphContext,this->graph,"dot","fraglets_map.dot");
     gvFreeLayout(graphContext, this->graph);

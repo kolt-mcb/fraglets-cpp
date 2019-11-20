@@ -53,10 +53,17 @@ class fraglets {
         Agraph_t* graph = agopen("G", Agdirected, NULL);
         Agraph_t* subgraph = agsubg(graph, "cluster", 1);
         std::map <molecule,Agnode_t*> nodesTable;
+        std::map <molecule,Agedge_t*> edgeTable;
+        std::map<int,molecule>  stackplotIndexMap;
+        std::set<molecule> mappedMols;
+        int stackplotIndexCounter = 1;
         moleculeMultiset reactionCoutTable;
+
+        
 
 
     public:
+        std::vector<std::vector<int>> StackplotVector;
         void inject(const molecule& mol,int mult=1);
         double propensity();
         int run_unimol();
