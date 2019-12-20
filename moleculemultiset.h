@@ -8,22 +8,21 @@
 
 int rand_between(int begin, int end);
 
-
-typedef std::string molecule;
+typedef std::string symbol;
+typedef std::vector<symbol> molecule;
 typedef std::vector<molecule> moleculeVector;
-typedef std::unordered_multiset<molecule>   unorderedMultiset;
+typedef std::unordered_multiset<const molecule*>   unorderedMultiset;
 
 
 class moleculeMultiset {
 
     public:
-        void inject(const molecule& mol, int mul);
-        int expel(const molecule& mol, int mult);
-        molecule expelrnd(const molecule& mol);
-        molecule rndMol();
-        molecule expelrnd();
+        // moleculeMultiset();
+        void inject(const molecule* mol, int mul);
+        int expel(const molecule* mol, int mult);
+        const molecule& expelrnd();
+        const molecule* rndMol();
         int mult(molecule mol);
         int mult();
         unorderedMultiset multiset;
-
 };

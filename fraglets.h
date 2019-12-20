@@ -52,19 +52,21 @@ class fraglets {
         bool idle;
         Agraph_t* graph = agopen("G", Agdirected, NULL);
         Agraph_t* subgraph = agsubg(graph, "cluster", 1);
-        std::map <molecule,Agnode_t*> nodesTable;
-        std::map <molecule,Agedge_t*> edgeTable;
+        std::map <symbol,Agnode_t*> nodesTable;
+        std::map <symbol,Agedge_t*> edgeTable;
         std::map<int,molecule>  stackplotIndexMap;
         std::set<molecule> mappedMols;
         int stackplotIndexCounter = 1;
         moleculeMultiset reactionCoutTable;
+        void addNode(const std::string& mol,const bool& unimol,const bool& matchp,const bool& bimol);
+        void addEdge(const molecule& activeMolecule,const molecule& passiveMolecule,const bool& unimol,const bool& matchp);
 
         
 
 
     public:
         std::vector<std::vector<int>> StackplotVector;
-        void inject(const molecule& mol,int mult=1);
+        void inject(const molecule* mol,int mult=1);
         double propensity();
         int run_unimol();
         bool isbimol(const molecule& mol);
@@ -84,8 +86,8 @@ class fraglets {
         void parse(std::string line);
         void interpret(std::string filename);
         void trace();
-        void addNode(molecule mol);
-        void addEdge(molecule activeMoleule, molecule passiveMolecule, bool unimol,bool matchp);
+        void drawGraphViz();
+
 
         
 
