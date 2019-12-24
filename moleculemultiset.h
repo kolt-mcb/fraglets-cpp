@@ -4,6 +4,10 @@
 #include <set>
 #include <iostream>
 #include <random>
+#include <memory>
+
+
+
 
 
 int rand_between(int begin, int end);
@@ -11,7 +15,7 @@ int rand_between(int begin, int end);
 typedef std::string symbol;
 typedef std::vector<symbol> molecule;
 typedef std::vector<molecule> moleculeVector;
-typedef std::unordered_multiset<const molecule*>   unorderedMultiset;
+typedef std::unordered_multiset<const molecule&>   unorderedMultiset;
 
 
 class moleculeMultiset {

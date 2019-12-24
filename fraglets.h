@@ -16,9 +16,9 @@
 typedef std::map<std::string, double> propMap;
 
 typedef std::map<std::string, double>::iterator propMapIterator;
-typedef std::vector<molecule> opResult;
-typedef std::function<opResult (const molecule&, const molecule&)> bimolOp ; 
-typedef std::function<opResult (const molecule&)> unimolOp ;
+typedef std::vector<const molecule*> opResult;
+typedef std::function<opResult (const molecule&, const molecule&)> bimolOp;
+typedef std::function<opResult (const molecule&)> unimolOp;
 
 
 extern std::string match;

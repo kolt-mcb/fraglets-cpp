@@ -24,23 +24,24 @@ void moleculeMultiset::inject(const molecule* mol,int mult = 1){
     // for (int i = 1; i < mult; i++){
     //     this->multiset[mol]++;
     // }
-    
+    std::cout << "inject" << mol << '\n';
     for (int i = 0; i< mult; i++){
-        
-        this->multiset.insert(mol);
-        
+
+        this->multiset.insert(*mol);
+
+
         // std::cout<<"insert " << mol << '\n';
     }
 }
 int moleculeMultiset::expel(const molecule* mol, int mult = 1){
 
     // int total = 0;
-    
+
     // int remaning = this->multiset[mol];
     // if (remaning <= mult){
     //     this->multiset.erase(mol);
     //     return remaning;
-    // } 
+    // }
     // else{
     //     this->multiset[mol] = remaning - mult;
     //     return mult;
@@ -48,7 +49,7 @@ int moleculeMultiset::expel(const molecule* mol, int mult = 1){
     int total = 0;
     unorderedMultiset::iterator it;
     for (int i = 0; i < mult; i++){
-        it = this->multiset.find(mol);
+        it = this->multiset.find(*mol);
         if (it != this->multiset.end()){
             this->multiset.erase(it);
             total++;
@@ -73,15 +74,27 @@ const molecule* moleculeMultiset::rndMol(){
         // std::cout<< "rndmol " << mol << " " << this->multiset.size() << "\n";
         // return mol;
         unorderedMultiset::iterator random_it = std::next(std::begin(this->multiset), rand_between(0, this->multiset.size()-1));
-        const molecule* mol = *random_it;
+        const molecule mol = *random_it;
         return mol;
     }
 }
-    
+
 
 const molecule& moleculeMultiset::expelrnd(){
-    const 
-    molecule* mol = this->rndMol();
+
+    const molecule* mol = this->rndMol();
+
+    // symbol t = *(mol->begin());
+
+
+    std::cout<< "rndmol " << this->multiset.size() << "\n";
+    const molecule* t = *this->multiset.begin();
+    std::cout << "wattt"<< '\n';
+    std::cout << t << '\n';
+
+    std::cout << "test" << '\n';
+
+    // std::cout << t << '\n';
     this->expel(mol);
     return *mol;
 }
@@ -93,11 +106,11 @@ int moleculeMultiset::mult(const molecule mol){
     }
 
     return this->multiset.count(&mol);
-    
+
 }
 
 int moleculeMultiset::mult(){
     return this->multiset.size();
-    
+
 }
 

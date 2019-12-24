@@ -2,10 +2,10 @@
 #include <chrono>
 #include <sstream>
 #include <iterator>
-#include <cstddef> 
+#include <cstddef>
 #include <fstream>
-#include <string> 
-#include <sstream> 
+#include <string>
+#include <sstream>
 #include <iterator>
 
 
@@ -36,7 +36,7 @@ bool isNumber(const std::string& mol){
     {
         return false;
     }
-    
+
 }
 
 symbol molToString(const molecule& mol){
@@ -113,8 +113,10 @@ void fraglets::addEdge(const molecule& mol,const  molecule& resultMol,const bool
 opResult r_match(const molecule& activeMolecule, const molecule& passiveMolecule){
     opResult result;
 
-    molecule newMol = molecule(activeMolecule.begin()+2,activeMolecule.end());
-    newMol.insert(newMol.end(),passiveMolecule.begin()+1,passiveMolecule.end());
+
+
+    molecule* newMol =  new molecule(activeMolecule.begin()+2,activeMolecule.end());
+    newMol->insert(newMol->end(),passiveMolecule.begin()+1,passiveMolecule.end());
 
 
     result.insert(result.begin(),newMol);
@@ -124,7 +126,8 @@ opResult r_match(const molecule& activeMolecule, const molecule& passiveMolecule
 
 opResult r_matchp(const molecule& activeMolecule, const molecule& passiveMolecule){
     opResult result =  r_match(activeMolecule,passiveMolecule);
-    result.push_back(activeMolecule);
+    molecule* newMol = new molecule(activeMolecule);
+    result.push_back(newMol);
     return result;
 }
 
@@ -133,49 +136,49 @@ opResult r_copy(const molecule& mol){
     if (mol.size()> 2){
         return result;
     }
-    result.push_back(molecule(mol.begin()+1,mol.end()));
-    result.push_back(molecule(mol.begin()+1,mol.end()));
+    result.push_back(new molecule(mol.begin()+1,mol.end()));
+    result.push_back(new molecule(mol.begin()+1,mol.end()));
     return result;
 }
 
 opResult r_fork(const molecule& mol){
     opResult result;
-    
+
     if (mol.size()<2){ return result;}
-    molecule mol1;
+    molecule* mol1 = new molecule();
     if (mol.size()<3){
-        mol1.insert(mol1.begin(),mol.begin()+1,mol.end());
+        mol1->insert(mol1->begin(),mol.begin()+1,mol.end());
         result.push_back(mol1);
         return result;
     }
-    molecule mol2;
+    molecule* mol2 = new molecule();
     if (mol.size()<4){
-        mol1.push_back(mol[1]);
-        mol2.push_back(mol[2]);
+        mol1->push_back(mol[1]);
+        mol2->push_back(mol[2]);
     }
     else{
-        mol1.push_back(mol[1]);
-        mol1.insert(mol1.end(),mol.begin()+2,mol.end());
-        mol2.push_back(mol[2]);
-        mol2.insert(mol2.end(),mol.begin()+2,mol.end());
+        mol1->push_back(mol[1]);
+        mol1->insert(mol1->end(),mol.begin()+2,mol.end());
+        mol2->push_back(mol[2]);
+        mol2->insert(mol2->end(),mol.begin()+2,mol.end());
     }
     result.push_back(mol1);
     result.push_back(mol2);
-    
+
     return result;
 }
 opResult r_dup(const molecule& mol){
     opResult result;
     if (mol.size()<2){return result;}
-    molecule mol1;
+    molecule* mol1 = new molecule;
     if (mol.size()<3){
-        mol1.push_back(mol[1]);
+        mol1->push_back(mol[1]);
         result.push_back(mol1);
         return result;
     }
-    mol1.push_back(mol[1]);
-    mol1.push_back(mol[2]);
-    mol1.insert(mol1.begin(),mol.begin()+2,mol.end());
+    mol1->push_back(mol[1]);
+    mol1->push_back(mol[2]);
+    mol1->insert(mol1->begin(),mol.begin()+2,mol.end());
     return result;
 }
 
@@ -186,8 +189,8 @@ opResult r_nop(const molecule& mol){
     if (mol.size()<2){
         return result;
     }
-    molecule mol1;
-    mol1.insert(mol1.begin(),mol.begin()+1,mol.end());
+    molecule* mol1 = new molecule;
+    mol1->insert(mol1->begin(),mol.begin()+1,mol.end());
     result.push_back(mol1);
     return result;
 }
@@ -201,19 +204,19 @@ opResult r_split(const molecule& mol){
     if(mol.size()<2){
         return result;
     }
-    molecule mol1;
-    molecule mol2;
+    molecule* mol1 = new molecule();
+    molecule* mol2 = new molecule();
     int which = false;
-    for (symbol frag: mol){
+    for (auto frag: mol){
         if (frag == "*"){
             if(which){
                 which = true;
             }
         }
         if(!which){
-            mol1.push_back(frag);
+            mol1->push_back(frag);
         }else{
-            mol2.push_back(frag);
+            mol2->push_back(frag);
         }
     }
     result.push_back(mol1);
@@ -228,23 +231,23 @@ opResult r_exch(const molecule& mol){
     if(mol.size()<2){
         return result;
     }
-    molecule mol1;
+    molecule* mol1 = new molecule();
     if(mol.size()<4){
-        mol1.insert(mol1.begin(),mol.begin()+1,mol.end());
+        mol1->insert(mol1->begin(),mol.begin()+1,mol.end());
         result.push_back(mol1);
         return result;
     }
     if (mol.size()<5){
-        mol1.push_back(mol[1]);
-        mol1.push_back(mol[3]);
-        mol1.push_back(mol[2]);
+        mol1->push_back(mol[1]);
+        mol1->push_back(mol[3]);
+        mol1->push_back(mol[2]);
         result.push_back(mol1);
         return result;
     }
-    mol1.push_back(mol[1]);
-    mol1.push_back(mol[3]);
-    mol1.push_back(mol[2]);
-    mol1.insert(mol1.begin(),mol.begin()+4,mol.end());
+    mol1->push_back(mol[1]);
+    mol1->push_back(mol[3]);
+    mol1->push_back(mol[2]);
+    mol1->insert(mol1->begin(),mol.begin()+4,mol.end());
     result.push_back(mol1);
     return result;
 
@@ -276,11 +279,11 @@ opResult r_length(const molecule& mol){
     if (mol.size() <= 2){
         return result;
     }
-    molecule mol1;
-    mol1.push_back(mol[1]);
-    std::string molSize = std::to_string(mol.size()-3);
-    mol1.push_back(molSize);
-    mol1.insert(mol1.begin(),mol.begin()+2,mol.end());
+    molecule* mol1 = new molecule();
+    mol1->push_back(mol[1]);
+    symbol* molSize = new symbol(std::to_string(mol.size()-3));
+    mol1->push_back(*molSize);
+    mol1->insert(mol1->begin(),mol.begin()+2,mol.end());
     result.push_back(mol1);
     return result;
 }
@@ -295,19 +298,19 @@ opResult r_lessthan(const molecule& mol){
         if (isNumber(num1) and isNumber(num2)){
             float n1  = std::stoi(num1);
             float n2 = std::stoi(num2);
-            molecule mol1;
+            molecule* mol1 = new molecule();
             if (n1<n2){
-                mol1.push_back(mol[1]);
+                mol1->push_back(mol[1]);
             }
             else{
-                mol1.push_back(mol[2]);
+                mol1->push_back(mol[2]);
             }
 
-            mol1.insert(mol1.end(),mol.begin()+3,mol.end());
+            mol1->insert(mol1->end(),mol.begin()+3,mol.end());
             result.push_back(mol1);
-        } 
+        }
     }
-    return result;   
+    return result;
 }
 
 opResult r_pop(const molecule& mol){
@@ -315,17 +318,17 @@ opResult r_pop(const molecule& mol){
     if (mol.size() < 2){
         return result;
     }
-    molecule mol1;
+    molecule* mol1 = new molecule();
     if( mol.size() < 4){
-        mol1.push_back(mol[1]);
+        mol1->push_back(mol[1]);
         result.push_back(mol1);
         return result;
     }
-    mol1.push_back(mol[1]);
-    mol1.insert(mol1.end(),mol.begin()+3,mol.end());
+    mol1->push_back(mol[1]);
+    mol1->insert(mol1->end(),mol.begin()+3,mol.end());
     result.push_back(mol1);
     return result;
-    
+
 }
 
 opResult r_pop2(const molecule& mol){
@@ -334,18 +337,18 @@ opResult r_pop2(const molecule& mol){
     if (mol.size() < 3){
         return result;
     }
-    molecule mol1;
-    molecule mol2;
+    molecule* mol1 = new molecule();
+    molecule* mol2= new molecule();
     if( mol.size()== 3){
 
-        mol1.push_back(mol[1]);
-        mol2.push_back(mol[2]);
+        mol1->push_back(mol[1]);
+        mol2->push_back(mol[2]);
     }
     if (mol.size()> 3){
-        mol1.push_back(mol[1]);
-        mol1.push_back(mol[3]);
-        mol2.push_back(mol[2]);
-        mol2.insert(mol2.end(),mol.begin()+4,mol.end());
+        mol1->push_back(mol[1]);
+        mol1->push_back(mol[3]);
+        mol2->push_back(mol[2]);
+        mol2->insert(mol2->end(),mol.begin()+4,mol.end());
 
     }
     result.push_back(mol1);
@@ -391,11 +394,9 @@ double random_double(){
 
 void fraglets::inject(const molecule* mol,int mult){
 
-
+    std::cout << "frag::inject" << mol << "\n";
     if (mol->empty() or mult < 1){return;}
-    molecule m = *mol;
     if (mol->size()>= 1){
-        std::cout << (*mol)[0] << '\n'; 
         if (this->isbimol(*mol)){
                 std::string key = (*mol)[1];
                 // could check for invalid fraglets here.
@@ -406,20 +407,16 @@ void fraglets::inject(const molecule* mol,int mult){
             this->unimol.inject(mol,mult);
             }
         else{
-            const molecule m = *mol;
-            const molecule s = mol[0];
-            std::string t = s[0];
-            std::cout << t << "werS" << '\n';
-            std::string key = (*mol)[1];
+            std::string key = (*mol)[0];
             // could check for invalid fraglets here.
             this->passive.inject(key,mol,mult);
             this->idle = false;
-        }                  
+        }
     }
     // else{
     //     if ((!this->isbimol(mol)) and (!this->isunimol(mol))){
     //     this->passive.inject(mol,mol,mult);
-    //     this->idle = false; 
+    //     this->idle = false;
     //     }
     // }
 }
@@ -427,7 +424,7 @@ void fraglets::inject(const molecule* mol,int mult){
 bool fraglets::isbimol(const molecule& mol){
     if (mol.empty()){ return false;}
 
-    std::string tag = mol[0]; 
+    std::string tag = mol[0];
     return (tag == match) or (tag == matchp);
 }
 
@@ -446,6 +443,7 @@ bool fraglets::isunimol(const molecule& mol){
 }
 
 double fraglets::propensity(){
+
     this->run_unimol();
 
     this->prop.clear();
@@ -453,7 +451,7 @@ double fraglets::propensity(){
     keyMultisetMap::iterator it = this->active.keyMap.begin();
     for (;it != this->active.keyMap.end();it++){
         std::string key = it->first;
-        std::cout<< key;
+        std::cout << key << '\n';
         std::size_t m = this->active.multk(key);
         std::size_t p = this->passive.multk(key);
         std::size_t w = m*p;
@@ -511,19 +509,19 @@ opResult fraglets::react2(const molecule& activeMolecule,const molecule& passive
 
 
     if (result.size() == 1){
-        
-        std::cout << "[ " <<  molToString(activeMolecule) << " ] , [ " <<  molToString(passiveMolecule) << " ] -> \n[ " <<  molToString(result[0]) << " ]\n";
-        this->addEdge(activeMolecule,result[0],false,isMatchp(activeMolecule));
-        this->addEdge(passiveMolecule,result[0],false,false);
+
+        std::cout << "[ " <<  molToString(activeMolecule) << " ] , [ " <<  molToString(passiveMolecule) << " ] -> \n[ " <<  molToString(*result[0]) << " ]\n";
+        this->addEdge(activeMolecule,*result[0],false,isMatchp(activeMolecule));
+        this->addEdge(passiveMolecule,*result[0],false,false);
 
     }
     if (result.size() == 2){
 
-        std::cout << "[ " <<  molToString(activeMolecule) << " ] , [ " <<  molToString(passiveMolecule) << " ] -> \n[ " <<  molToString(result[0]) << " ] , [ " <<  molToString(result[1]) << " ]\n";
-        this->addEdge(activeMolecule,result[0],false,isMatchp(activeMolecule));
-        this->addEdge(activeMolecule,result[1],false,isMatchp(activeMolecule));
-        this->addEdge(passiveMolecule,result[0],false,false);
-        this->addEdge(passiveMolecule,result[1],false,false);
+        std::cout << "[ " <<  molToString(activeMolecule) << " ] , [ " <<  molToString(passiveMolecule) << " ] -> \n[ " <<  molToString(*result[0]) << " ] , [ " <<  molToString(*result[1]) << " ]\n";
+        this->addEdge(activeMolecule,*result[0],false,isMatchp(activeMolecule));
+        this->addEdge(activeMolecule,*result[1],false,isMatchp(activeMolecule));
+        this->addEdge(passiveMolecule,*result[0],false,false);
+        this->addEdge(passiveMolecule,*result[1],false,false);
     }
     return result;
 }
@@ -531,22 +529,25 @@ opResult fraglets::react2(const molecule& activeMolecule,const molecule& passive
 int fraglets::run_unimol(){
     int n = 0;
     while (!this->unimol.multiset.empty()){
+        
         molecule mol = this->unimol.expelrnd();
+        std::cout << "did you see me" << '\n';
+        
         opResult result = this->react1(mol);
         const char* const delim = " ";
         if (result.size() == 1){
 
 
-            std::cout << "[ " << molToString(mol) << " ] ->\n[ " << molToString(result[0]) << " ]\n" ;
-            this->addEdge(mol,result[0],true,false);   
-        }   
+            std::cout << "[ " << molToString(mol) << " ] ->\n[ " << molToString(*result[0]) << " ]\n" ;
+            this->addEdge(mol,*result[0],true,false);
+        }
         if (result.size() == 2){
 
-            std::cout << "[ " << molToString(mol) << " ] ->\n[ " << molToString(result[0]) << " ] , [ " <<  molToString(result[1]) << " ]\n" ;
-            this->addEdge(mol,result[0],true,false);
-            this->addEdge(mol,result[1],true,false);
+            std::cout << "[ " << molToString(mol) << " ] ->\n[ " << molToString(*result[0]) << " ] , [ " <<  molToString(*result[1]) << " ]\n" ;
+            this->addEdge(mol,*result[0],true,false);
+            this->addEdge(mol,*result[1],true,false);
         }
-      
+
         this->inject_list(result);
         n++;
     }
@@ -564,9 +565,9 @@ void fraglets::run_bimol(){
 void fraglets::inject_list(opResult result){
     opResult::iterator it = result.begin();
     for (;it!=result.end();it++){
-        molecule mol = *it;
-        this->inject(&mol);
-        this->reactionCoutTable.inject(&mol,1);
+        const molecule* mol = *it;
+        this->inject(mol);
+        this->reactionCoutTable.inject(mol,1);
     }
 }
 
@@ -629,7 +630,7 @@ void fraglets::run(int niter,int molCap){
         //         this->stackplotIndexCounter += 1;
         //     }
         //     molCountMap[unimol] = mult;
-        
+
         // }
 
 
@@ -683,7 +684,7 @@ void fraglets::drawGraphViz(){
     //     int reactionCount = ((this->reactionCoutTable.mult({""})/this->reactionCoutTable.mult(edge.first)))+1;
 
     //     std::string s = std::to_string(reactionCount);
-    //     char  *weight = const_cast<char *>(s.c_str()); 
+    //     char  *weight = const_cast<char *>(s.c_str());
     //     agsafeset(edge.second,"weight",weight,weight);
     //     agsafeset(edge.second,"penwidth",weight,weight);
     // }
@@ -708,25 +709,25 @@ void fraglets::drawGraphViz(){
 
 void fraglets::parse(std::string line){
 
-    
+
     if ((line[0] == '#') or line.empty()){
         return;
     }
 
     // if (bracket2 != line.back()){
 
-    // } 
+    // }
 
     size_t bracket1 = line.find_first_of("[");
     size_t bracket2 = line.find_first_of("]");
 
-    std::cout<<line<< '\n';
+
     symbol _mol = symbol(line.substr(bracket1+1,bracket2-(bracket1+1)));
-
-
 
     std::istringstream iss(_mol);
     const molecule* mol = new molecule((std::istream_iterator<std::string>(iss)),std::istream_iterator<std::string>());
+    std::cout << "points" << mol <<  '\n';
+
     this->inject(mol);
 
 

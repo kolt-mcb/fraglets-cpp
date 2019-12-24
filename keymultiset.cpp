@@ -3,7 +3,6 @@
 
 
 void keyMultiset::inject(std::string key, const molecule* mol, int mult){
-    std::cout << "?" << '\n';
     if ((key.empty()) or (mol->empty())){return;}
     keyMultisetMap::iterator it = this->keyMap.find(key);
     moleculeMultiset* mset;
