@@ -1,6 +1,7 @@
 #include "moleculemultiset.h"
 #include <random>
 #include <iostream>
+#include <memory>
 
 
 int rand_between(int begin,int end){
@@ -16,24 +17,12 @@ int rand_between(int begin,int end){
 
 
 
-void moleculeMultiset::inject(const molecule* mol,int mult = 1){
-    // if (this->multiset.find(mol) == this->multiset.end()){
-    //     this->multiset[mol] = 1;
-    // }
-
-    // for (int i = 1; i < mult; i++){
-    //     this->multiset[mol]++;
-    // }
-    std::cout << "inject" << mol << '\n';
+void moleculeMultiset::inject(molecule& mol,int mult = 1){
     for (int i = 0; i< mult; i++){
-
-        this->multiset.insert(*mol);
-
-
-        // std::cout<<"insert " << mol << '\n';
+        this->multiset.insert(mol);
     }
 }
-int moleculeMultiset::expel(const molecule* mol, int mult = 1){
+int moleculeMultiset::expel(molecule& mol, int mult = 1){
 
     // int total = 0;
 
@@ -46,10 +35,13 @@ int moleculeMultiset::expel(const molecule* mol, int mult = 1){
     //     this->multiset[mol] = remaning - mult;
     //     return mult;
     // }
+
     int total = 0;
     unorderedMultiset::iterator it;
     for (int i = 0; i < mult; i++){
-        it = this->multiset.find(*mol);
+        // symbol s = (*this->multiset.begin())[0];
+        // symbol s2 = mol[0];
+        it = this->multiset.find(mol);
         if (it != this->multiset.end()){
             this->multiset.erase(it);
             total++;
@@ -60,12 +52,12 @@ int moleculeMultiset::expel(const molecule* mol, int mult = 1){
 
 
 // https://stackoverflow.com/questions/27024269/select-random-element-in-an-unordered-map
-const molecule* moleculeMultiset::rndMol(){
+molecule moleculeMultiset::rndMol(){
 
 
     if (this->multiset.empty()){
         // I know this is fucked but what do I do.
-        const molecule* mol = new molecule();
+        molecule mol;
         return mol;
     }else{
 
@@ -73,30 +65,18 @@ const molecule* moleculeMultiset::rndMol(){
         // molecule mol = *it;
         // std::cout<< "rndmol " << mol << " " << this->multiset.size() << "\n";
         // return mol;
+
         unorderedMultiset::iterator random_it = std::next(std::begin(this->multiset), rand_between(0, this->multiset.size()-1));
-        const molecule mol = *random_it;
+        molecule mol = *random_it;
         return mol;
     }
 }
 
 
-const molecule& moleculeMultiset::expelrnd(){
-
-    const molecule* mol = this->rndMol();
-
-    // symbol t = *(mol->begin());
-
-
-    std::cout<< "rndmol " << this->multiset.size() << "\n";
-    const molecule* t = *this->multiset.begin();
-    std::cout << "wattt"<< '\n';
-    std::cout << t << '\n';
-
-    std::cout << "test" << '\n';
-
-    // std::cout << t << '\n';
+molecule moleculeMultiset::expelrnd(){
+    molecule mol = this->rndMol();
     this->expel(mol);
-    return *mol;
+    return mol;
 }
 
 
@@ -105,7 +85,7 @@ int moleculeMultiset::mult(const molecule mol){
         return this->multiset.size();
     }
 
-    return this->multiset.count(&mol);
+    return this->multiset.count(mol);
 
 }
 

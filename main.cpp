@@ -9,7 +9,7 @@ std::string alphabet = {"abcdtuvxz"};
 int main(int argc, char *argv[]) {
 
 
-    QApplication a(argc, argv);
+    // QApplication a(argc, argv);
 
     
     fraglets frag;
@@ -57,60 +57,50 @@ int main(int argc, char *argv[]) {
     frag.run(3000,2000);
 
 
-    QtCharts::QLineSeries *series = new QtCharts::QLineSeries();
-    QtCharts::QLineSeries *series2 = new QtCharts::QLineSeries();
+    // QtCharts::QLineSeries *series = new QtCharts::QLineSeries();
+    // QtCharts::QLineSeries *series2 = new QtCharts::QLineSeries();
     
-    for (int j = 0;j< frag.activeMultisetSize.size();j++){
-        // std::cout <<j << " " << frag.activeMultisetSize[j]<<'\n';
-        series->append(j,frag.activeMultisetSize[j]);
+    // for (int j = 0;j< frag.activeMultisetSize.size();j++){
+    //     // std::cout <<j << " " << frag.activeMultisetSize[j]<<'\n';
+    //     series->append(j,frag.activeMultisetSize[j]);
 
-    }
+    // }
 
-    for (int j = 0;j< frag.passiveMultisetSize.size();j++){
-        // std::cout <<j << " " << frag.passiveMultisetSize[j]<<'\n';
-        series2->append(j,frag.passiveMultisetSize[j]);
+    // for (int j = 0;j< frag.passiveMultisetSize.size();j++){
+    //     // std::cout <<j << " " << frag.passiveMultisetSize[j]<<'\n';
+    //     series2->append(j,frag.passiveMultisetSize[j]);
 
-    }
+    // }
 
-    QtCharts::QChart *chart = new QtCharts::QChart();
-    chart->legend()->hide();
-    for (std::vector<int> vec : frag.StackplotVector){
-        QtCharts::QLineSeries *series3 = new QtCharts::QLineSeries();
-        for (int r = 0;r< vec.size();r++){
-            series3->append(r,vec[r]);
-        }
-        chart->addSeries(series3);
-    }
+    // QtCharts::QChart *chart = new QtCharts::QChart();
+    // chart->legend()->hide();
+    // for (std::vector<int> vec : frag.StackplotVector){
+    //     QtCharts::QLineSeries *series3 = new QtCharts::QLineSeries();
+    //     for (int r = 0;r< vec.size();r++){
+    //         series3->append(r,vec[r]);
+    //     }
+    //     chart->addSeries(series3);
+    // }
 
+    // // chart->addSeries(series);
+    // // chart->addSeries(series2);
+    // chart->createDefaultAxes();
+    // chart->setTitle("Simple line chart example");
 
-//![2]
+    // QtCharts::QChartView *chartView = new QtCharts::QChartView(chart);
+    // chartView->setRenderHint(QPainter::Antialiasing);
 
-//![3]
+    // QMainWindow window;
+    // window.setCentralWidget(chartView);
+    // window.resize(400, 300);
+    // window.show();
 
-    // chart->addSeries(series);
-    // chart->addSeries(series2);
-    chart->createDefaultAxes();
-    chart->setTitle("Simple line chart example");
-//![3]
-
-//![4]
-    QtCharts::QChartView *chartView = new QtCharts::QChartView(chart);
-    chartView->setRenderHint(QPainter::Antialiasing);
-//![4]
-
-
-//![5]
-    QMainWindow window;
-    window.setCentralWidget(chartView);
-    window.resize(400, 300);
-    window.show();
-// //![5]
 
 
 
 
   
 
-    // return 0;
-    return a.exec();
+    return 0;
+    // return a.exec();
 }

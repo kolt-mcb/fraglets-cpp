@@ -16,9 +16,9 @@
 typedef std::map<std::string, double> propMap;
 
 typedef std::map<std::string, double>::iterator propMapIterator;
-typedef std::vector<const molecule*> opResult;
-typedef std::function<opResult (const molecule&, const molecule&)> bimolOp;
-typedef std::function<opResult (const molecule&)> unimolOp;
+typedef std::vector< molecule> opResult;
+typedef std::function<opResult (molecule&, molecule&)> bimolOp;
+typedef std::function<opResult (molecule&)> unimolOp;
 
 
 extern std::string match;
@@ -66,15 +66,15 @@ class fraglets {
 
     public:
         std::vector<std::vector<int>> StackplotVector;
-        void inject(const molecule* mol,int mult=1);
+        void inject(molecule& mol,int mult=1);
         double propensity();
         int run_unimol();
         bool isbimol(const molecule& mol);
         bool isMatchp(const molecule& mol);
         bool isunimol(const molecule& mol);
         void react(double w);
-        opResult react1(const molecule& mol);
-        opResult react2(const molecule& activeMolecule ,const molecule& passiveMolecule);
+        opResult react1(molecule& mol);
+        opResult react2(molecule& activeMolecule ,molecule& passiveMolecule);
         void inject_list(opResult);
         void iterate();
         void run(int niter,int molCap);

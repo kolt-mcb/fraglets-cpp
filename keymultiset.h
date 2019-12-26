@@ -9,10 +9,10 @@ class keyMultiset  {
     
     public:
         int total = 0;
-        void inject(std::string key, const molecule* mol, int mult=1);
-        void expel(std::string key, const molecule* mol, int mult=1);
-        const molecule* rndmol(std::string key);
-        const molecule* expelrnd(std::string key);
+        void inject(std::string key, molecule& mol, int mult=1);
+        void expel(std::string key, molecule& mol, int mult=1);
+        molecule rndmol(std::string key);
+        molecule expelrnd(std::string key);
         int mult(const molecule& mol);
         int multk(std::string key);
         int nspecies();
