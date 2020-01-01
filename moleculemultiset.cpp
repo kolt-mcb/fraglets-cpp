@@ -17,24 +17,12 @@ int rand_between(int begin,int end){
 
 
 
-void moleculeMultiset::inject(molecule& mol,int mult = 1){
+void moleculeMultiset::inject(std::shared_ptr<molecule> mol,int mult = 1){
     for (int i = 0; i< mult; i++){
         this->multiset.insert(mol);
     }
 }
-int moleculeMultiset::expel(molecule& mol, int mult = 1){
-
-    // int total = 0;
-
-    // int remaning = this->multiset[mol];
-    // if (remaning <= mult){
-    //     this->multiset.erase(mol);
-    //     return remaning;
-    // }
-    // else{
-    //     this->multiset[mol] = remaning - mult;
-    //     return mult;
-    // }
+int moleculeMultiset::expel(std::shared_ptr<molecule> mol, int mult = 1){
 
     int total = 0;
     unorderedMultiset::iterator it;
@@ -52,12 +40,12 @@ int moleculeMultiset::expel(molecule& mol, int mult = 1){
 
 
 // https://stackoverflow.com/questions/27024269/select-random-element-in-an-unordered-map
-molecule moleculeMultiset::rndMol(){
+std::shared_ptr<molecule> moleculeMultiset::rndMol(){
 
 
     if (this->multiset.empty()){
         // I know this is fucked but what do I do.
-        molecule mol;
+        std::shared_ptr<molecule> mol;
         return mol;
     }else{
 
@@ -67,21 +55,21 @@ molecule moleculeMultiset::rndMol(){
         // return mol;
 
         unorderedMultiset::iterator random_it = std::next(std::begin(this->multiset), rand_between(0, this->multiset.size()-1));
-        molecule mol = *random_it;
+        std::shared_ptr<molecule> mol = *random_it;
         return mol;
     }
 }
 
 
-molecule moleculeMultiset::expelrnd(){
-    molecule mol = this->rndMol();
+std::shared_ptr<molecule> moleculeMultiset::expelrnd(){
+    std::shared_ptr<molecule> mol = this->rndMol();
     this->expel(mol);
     return mol;
 }
 
 
-int moleculeMultiset::mult(const molecule mol){
-    if (mol.empty()){
+int moleculeMultiset::mult(std::shared_ptr<molecule> mol){
+    if (mol->empty()){
         return this->multiset.size();
     }
 

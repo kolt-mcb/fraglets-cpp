@@ -2,13 +2,13 @@
 
 
 
-void keyMultiset::inject(std::string key, molecule& mol, int mult){
-    if ((key.empty()) or (mol.empty())){return;}
-    keyMultisetMap::iterator it = this->keyMap.find(key);
+void keyMultiset::inject(std::shared_ptr<symbol> key, std::shared_ptr<molecule> mol, int mult){
+    if ((key->empty()) or (mol->empty())){return;}
+    keyMultisetMap::iterator it = this->keyMap.find(*key);
     moleculeMultiset* mset;
     if (it == this->keyMap.end()){
         mset = new moleculeMultiset();
-        this->keyMap[key] = mset;
+        this->keyMap[*key] = mset;
     }else{
         mset = it->second;
     }    
@@ -17,7 +17,7 @@ void keyMultiset::inject(std::string key, molecule& mol, int mult){
     this->total += mult;
 }
 
-void keyMultiset::expel(std::string key, molecule& mol, int mult){
+void keyMultiset::expel(symbol key, std::shared_ptr<molecule> mol, int mult){
     if ((key.empty()) or (mult < 0)){ return;}
     else{
         keyMultisetMap::iterator it = this->keyMap.find(key);
@@ -29,31 +29,30 @@ void keyMultiset::expel(std::string key, molecule& mol, int mult){
     }
 }
 
-molecule keyMultiset::rndmol(std::string key){
+std::shared_ptr<molecule> keyMultiset::rndmol(symbol key){
     keyMultisetMap::iterator it = this->keyMap.find(key);
     // if (it != this->keyMap.end()){
         moleculeMultiset mset = *it->second;
-        molecule mol = mset.rndMol();
+        std::shared_ptr<molecule> mol = mset.rndMol();
         return mol;
     // }
 }
 
-molecule keyMultiset::expelrnd(std::string key){
-    molecule mol = this->rndmol(key);
+std::shared_ptr<molecule> keyMultiset::expelrnd(symbol key){
+    std::shared_ptr<molecule> mol = this->rndmol(key);
     this->expel(key,mol);
     return mol;
 };
 
-// int mult(std::string molecule){
+// int mult(std::shared_ptr<symbol> molecule){
 
 // };
-int keyMultiset::multk(std::string key){
+int keyMultiset::multk(symbol key){
     // moleculeMultiset m = *this->keyMap[key];
     // std::cout << key << " while\n" ;
     keyMultisetMap::iterator it = this->keyMap.find(key);
     if (it!=this->keyMap.end()){
         moleculeMultiset mset =  *it->second;
-
         return mset.mult();
     }else
     {   

@@ -39,13 +39,16 @@ bool isNumber(const std::string& mol){
 
 }
 
-symbol molToString(const molecule& mol){
+symbol molToString(molecule mol){
     const char* const delim = " ";
-    std::ostringstream nodeString;
-    std::copy(mol.begin(), mol.end(),
-    std::ostream_iterator<std::string>(nodeString, delim));
+    std::string nodeString;
 
-    return nodeString.str();
+    for (auto sym : mol){
+        nodeString.append(*sym);
+        nodeString.push_back(' ');
+    }
+
+    return nodeString;
 
 
 }
@@ -56,7 +59,7 @@ std::unordered_set<std::string> unimolTags = {exch,pop,nop,split,length,fork,emp
 
 
 
-void fraglets::addNode(const std::string& mol,const bool& unimol,const bool& matchp,const bool& bimol){
+void fraglets::addNode(const std::string mol,const bool& unimol,const bool& matchp,const bool& bimol){
     char* c_mol = new char[mol.length() + 1];
 
     // mol.copy(c_mol,mol.size(),mol.front());
@@ -80,12 +83,12 @@ void fraglets::addNode(const std::string& mol,const bool& unimol,const bool& mat
     this->nodesTable[mol] = node;
 }
 
-void fraglets::addEdge(const molecule& mol,const  molecule& resultMol,const bool& unimol,const bool& matchp){
+void fraglets::addEdge(const std::shared_ptr<molecule> mol,const std::shared_ptr<molecule> resultMol,const bool& unimol,const bool& matchp){
 
 
-    std::string molString = molToString(mol);
+    std::string molString = molToString(*mol);
 
-    std::string resultMolString =  molToString(resultMol);
+    std::string resultMolString =  molToString(*resultMol);
 
 
 
@@ -108,119 +111,118 @@ void fraglets::addEdge(const molecule& mol,const  molecule& resultMol,const bool
     }
     this->edgeTable[molString] = edge;
 }
-
-
-opResult r_match(molecule& activeMolecule,molecule& passiveMolecule) {
+opResult r_match(const std::shared_ptr<molecule> activeMolecule, const std::shared_ptr<molecule> passiveMolecule){
     opResult result;
 
-    // molecule* newMol =  molecule()(activeMolecule.begin()+2,activeMolecule.end());
-    // newMol->insert(newMol->end(),passiveMolecule.begin()+1,passiveMolecule.end());
-    // result.insert(result.begin(),newMol);
-    // return result;
 
-    molecule newMol =molecule(activeMolecule.begin()+2,activeMolecule.end());
-    newMol.insert(newMol.end(),passiveMolecule.begin()+1,passiveMolecule.end());
+
+    std::shared_ptr<molecule> newMol =  std::make_shared<molecule>(activeMolecule->begin()+2,activeMolecule->end());
+    newMol->insert(newMol->end(),passiveMolecule->begin()+1,passiveMolecule->end());
+
+
     result.insert(result.begin(),newMol);
     return result;
 }
 
 
-opResult r_matchp(molecule& activeMolecule, molecule& passiveMolecule) {
+opResult r_matchp(const std::shared_ptr<molecule> activeMolecule, const std::shared_ptr<molecule> passiveMolecule){
     opResult result =  r_match(activeMolecule,passiveMolecule);
-    molecule newMol = molecule(activeMolecule);
-    result.push_back(newMol);
+    // std::shared_ptr<molecule> newMol = std::make_shared<molecule>(activeMolecule);
+    result.push_back(activeMolecule);
     return result;
 }
 
-opResult r_copy(molecule& mol){
+opResult r_copy(const std::shared_ptr<molecule> mol){
     opResult result;
-    if (mol.size()> 2){
+    if (mol->size()> 2){
         return result;
     }
-    result.push_back(molecule(mol.begin()+1,mol.end()));
-    result.push_back(molecule(mol.begin()+1,mol.end()));
+    result.push_back(std::make_shared<molecule>(mol->begin()+1,mol->end()));
+    result.push_back(std::make_shared<molecule>(mol->begin()+1,mol->end()));
     return result;
 }
 
-opResult r_fork(molecule& mol){
+opResult r_fork(const std::shared_ptr<molecule> mol){
     opResult result;
 
-    if (mol.size()<2){ return result;}
-    molecule mol1 = molecule();
-    if (mol.size()<3){
-        mol1.insert(mol1.begin(),mol.begin()+1,mol.end());
+    if (mol->size()<2){ return result;}
+    std::shared_ptr<molecule> mol1 = std::make_shared<molecule>();
+    if (mol->size()<3){
+        mol1->insert(mol1->begin(),mol->begin()+1,mol->end());
         result.push_back(mol1);
         return result;
     }
-    molecule mol2 = molecule();
-    if (mol.size()<4){
-        mol1.push_back(mol[1]);
-        mol2.push_back(mol[2]);
+    std::shared_ptr<molecule> mol2 = std::make_shared<molecule>();
+    if (mol->size()<4){
+        mol1->push_back((*mol)[1]);
+        mol2->push_back((*mol)[2]);
     }
     else{
-        mol1.push_back(mol[1]);
-        mol1.insert(mol1.end(),mol.begin()+2,mol.end());
-        mol2.push_back(mol[2]);
-        mol2.insert(mol2.end(),mol.begin()+2,mol.end());
+        mol1->push_back((*mol)[1]);
+        mol1->insert(mol1->end(),mol->begin()+2,mol->end());
+        mol2->push_back((*mol)[2]);
+        mol2->insert(mol2->end(),mol->begin()+2,mol->end());
     }
     result.push_back(mol1);
     result.push_back(mol2);
 
     return result;
 }
-opResult r_dup(molecule& mol){
+opResult r_dup(const std::shared_ptr<molecule> mol){
     opResult result;
-    if (mol.size()<2){return result;}
-    molecule mol1 = molecule();
-    if (mol.size()<3){
-        mol1.push_back(mol[1]);
+    if (mol->size()<2){return result;}
+    std::shared_ptr<molecule> mol1 = std::make_shared<molecule>();
+    if (mol->size()<3){
+        mol1->push_back((*mol)[1]);
         result.push_back(mol1);
         return result;
     }
-    mol1.push_back(mol[1]);
-    mol1.push_back(mol[2]);
-    mol1.insert(mol1.begin(),mol.begin()+2,mol.end());
+    mol1->push_back((*mol)[1]);
+    mol1->push_back((*mol)[2]);
+    mol1->insert(mol1->begin(),mol->begin()+2,mol->end());
     return result;
 }
 
 
-opResult r_nop(molecule& mol){
+opResult r_nop(const std::shared_ptr<molecule> mol){
     opResult result;
 
-    if (mol.size()<2){
+    if (mol->size()<2){
         return result;
     }
-    molecule mol1 = molecule();
-    mol1.insert(mol1.begin(),mol.begin()+1,mol.end());
+    std::shared_ptr<molecule> mol1 = std::make_shared<molecule>();
+    mol1->insert(mol1->begin(),mol->begin()+1,mol->end());
     result.push_back(mol1);
     return result;
 }
 
-opResult r_nul(molecule& mo){
+opResult r_nul(const std::shared_ptr<molecule> mo){
     opResult result;
     return result;
 }
-opResult r_split(molecule& mol){
+opResult r_split(const std::shared_ptr<molecule> mol){
     opResult result;
-    if(mol.size()<2){
+    if(mol->size()<2){
         return result;
     }
-    molecule mol1 = molecule();
-    molecule mol2 = molecule();
-    int which = false;
-    molecule::iterator it = mol.begin()+1;
-    for (; it != mol.end();it++){
-        symbol frag = *it;
-        if (frag == "*"){
-            if(!which){
-                which = true;
+    std::shared_ptr<molecule> mol1 = std::make_shared<molecule>();
+    std::shared_ptr<molecule> mol2 = std::make_shared<molecule>();
+    int which = true;
+    bool skip =true;
+    for (auto frag: *mol){
+        if (skip){
+            skip = false;
+            continue;};
+        if (*frag == "*"){
+            if(which){
+                which = false;
                 continue;
             }
         }
-        if(!which){
-            mol1.push_back(frag);
+        if(which){
+            mol1->push_back(frag);
         }else{
-            mol2.push_back(frag);
+            mol2->push_back(frag);
         }
     }
     result.push_back(mol1);
@@ -229,131 +231,133 @@ opResult r_split(molecule& mol){
 }
 
 
-opResult r_exch(molecule& mol){
+opResult r_exch(const std::shared_ptr<molecule> mol){
     opResult result;
 
-    if(mol.size()<2){
+    if(mol->size()<2){
         return result;
     }
-    molecule mol1 = molecule();
-    if(mol.size()<4){
-        mol1.insert(mol1.begin(),mol.begin()+1,mol.end());
+    std::shared_ptr<molecule> mol1 = std::make_shared<molecule>();
+    if(mol->size()<4){
+        mol1->insert(mol1->begin(),mol->begin()+1,mol->end());
         result.push_back(mol1);
         return result;
     }
-    if (mol.size()<5){
-        mol1.push_back(mol[1]);
-        mol1.push_back(mol[3]);
-        mol1.push_back(mol[2]);
+    if (mol->size()<5){
+        mol1->push_back((*mol)[1]);
+        mol1->push_back((*mol)[3]);
+        mol1->push_back((*mol)[2]);
         result.push_back(mol1);
         return result;
     }
-    mol1.push_back(mol[1]);
-    mol1.push_back(mol[3]);
-    mol1.push_back(mol[2]);
-    mol1.insert(mol1.end(),mol.begin()+4,mol.end());
+    mol1->push_back((*mol)[1]);
+    mol1->push_back((*mol)[3]);
+    mol1->push_back((*mol)[2]);
+    mol1->insert(mol1->end(),mol->begin()+4,mol->end());
     result.push_back(mol1);
     return result;
 
 }
-opResult r_send(molecule& mo){
+opResult r_send(const std::shared_ptr<molecule> mo){
     opResult result;
     return result;
 }
 
-opResult r_empty(molecule& mol){
+opResult r_empty(const std::shared_ptr<molecule> mol){
     opResult result;
-    
-    if ( mol.size() < 3 ){
+
+    if ( mol->size() < 3 ){
         return result;
     }
-    molecule mol1;
-    if (mol.size() == 3){
-        mol1.push_back(mol[1]);
+    std::shared_ptr<molecule> mol1 = std::make_shared<molecule>();
+    if (mol->size() == 3){
+        mol1->push_back((*mol)[1]);
     }
-    if (mol.size() > 3){
-        mol1.insert(mol1.begin(),mol.begin()+2,mol.end());
+    if (mol->size() > 3){
+        mol1->insert(mol1->begin(),mol->begin()+2,mol->end());
     }
     result.push_back(mol1);
     return result;
 }
 
 
-opResult r_length(molecule& mol){
+opResult r_length(const std::shared_ptr<molecule> mol){
     opResult result;
-    if (mol.size() <= 2){
+    if (mol->size() <= 2){
         return result;
     }
-    molecule mol1 = molecule();
-    mol1.push_back(mol[1]);
-    symbol molSize = symbol(std::to_string(mol.size()-2));
-    mol1.push_back(molSize);
-    mol1.insert(mol1.end(),mol.begin()+2,mol.end());
+    std::shared_ptr<molecule> mol1 = std::make_shared<molecule>();
+    std::shared_ptr<symbol> molSize = std::make_shared<symbol>(std::to_string(mol->size()-2));
+
+    mol1->insert(mol1->begin(),mol->begin()+2,mol->end());
+
+    mol1->emplace(mol1->begin(),molSize);
+    mol1->emplace(mol1->begin(),(*mol)[1]);
     result.push_back(mol1);
     return result;
 }
 
 
-opResult r_lessthan(molecule& mol){
+opResult r_lessthan(const std::shared_ptr<molecule> mol){
     opResult result;
 
-    if (mol.size() > 3){
-        std::string num1 = mol[3];
-        std::string num2 = mol[4];
-        if (isNumber(num1) and isNumber(num2)){
-            float n1  = std::stoi(num1);
-            float n2 = std::stoi(num2);
-            molecule mol1 = molecule();
+    if (mol->size() > 3){
+        std::shared_ptr<symbol> num1 = (*mol)[3];
+        std::shared_ptr<symbol> num2 = (*mol)[4];
+        if (isNumber(*num1) and isNumber(*num2)){
+            float n1  = std::stoi(*num1);
+            float n2 = std::stoi(*num2);
+            std::shared_ptr<molecule> mol1 = std::make_shared<molecule>();
             if (n1<n2){
-                mol1.push_back(mol[1]);
+                mol1->push_back((*mol)[1]);
             }
             else{
-                mol1.push_back(mol[2]);
+                mol1->push_back((*mol)[2]);
             }
 
-            mol1.insert(mol1.end(),mol.begin()+3,mol.end());
+            mol1->insert(mol1->end(),mol->begin()+3,mol->end());
             result.push_back(mol1);
         }
     }
     return result;
 }
 
-opResult r_pop(molecule& mol){
+opResult r_pop(const std::shared_ptr<molecule> mol){
     opResult result;
-    if (mol.size() < 2){
+    if (mol->size() < 2){
         return result;
     }
-    molecule mol1 = molecule();
-    if( mol.size() < 4){
-        mol1.push_back(mol[1]);
+    std::shared_ptr<molecule> mol1 = std::make_shared<molecule>();
+    if( mol->size() < 4){
+        mol1->push_back((*mol)[1]);
         result.push_back(mol1);
         return result;
     }
-    mol1.push_back(mol[1]);
-    mol1.insert(mol1.end(),mol.begin()+3,mol.end());
+    mol1->push_back((*mol)[1]);
+    mol1->insert(mol1->end(),mol->begin()+3,mol->end());
     result.push_back(mol1);
     return result;
 
 }
 
-opResult r_pop2(molecule& mol){
+opResult r_pop2(const std::shared_ptr<molecule> mol){
     opResult result;
 
-    if (mol.size() < 3){
+    if (mol->size() < 3){
         return result;
     }
-    molecule mol1 = molecule();
-    molecule mol2= molecule();
-    if( mol.size()== 3){
+    std::shared_ptr<molecule> mol1 = std::make_shared<molecule>();
+    std::shared_ptr<molecule> mol2= std::make_shared<molecule>();
+    if( mol->size()== 3){
 
-        mol1.push_back(mol[1]);
-        mol2.push_back(mol[2]);
+        mol1->push_back((*mol)[1]);
+        mol2->push_back((*mol)[2]);
     }
-    if (mol.size()> 3){
-        mol1.push_back(mol[1]);
-        mol1.push_back(mol[3]);
-        mol2.push_back(mol[2]);
-        mol2.insert(mol2.end(),mol.begin()+4,mol.end());
+    if (mol->size()> 3){
+        mol1->push_back((*mol)[1]);
+        mol1->push_back((*mol)[3]);
+        mol2->push_back((*mol)[2]);
+        mol2->insert(mol2->end(),mol->begin()+4,mol->end());
 
     }
     result.push_back(mol1);
@@ -397,12 +401,11 @@ double random_double(){
 
 
 
-void fraglets::inject(molecule& mol,int mult){
-
-    if (mol.empty() or mult < 1){return;}
-    if (mol.size()>= 1){
+void fraglets::inject(std::shared_ptr<molecule> mol,int mult){
+    if (mol->empty() or mult < 1){return;}
+    if (mol->size()>= 1){
         if (this->isbimol(mol)){
-                std::string key = (mol)[1];
+                std::shared_ptr<symbol> key = (*mol)[1];
                 // could check for invalid fraglets here.
                 this->active.inject(key,mol,mult);
                 this->idle = false;
@@ -411,7 +414,7 @@ void fraglets::inject(molecule& mol,int mult){
             this->unimol.inject(mol,mult);
             }
         else{
-            std::string key = mol[0];
+            std::shared_ptr<symbol> key = (*mol)[0];
             // could check for invalid fraglets here.
             this->passive.inject(key,mol,mult);
             this->idle = false;
@@ -425,36 +428,35 @@ void fraglets::inject(molecule& mol,int mult){
     // }
 }
 
-bool fraglets::isbimol(const molecule& mol){
-    if (mol.empty()){ return false;}
+bool fraglets::isbimol(const std::shared_ptr<molecule> mol){
+    if (mol->empty()){ return false;}
 
-    std::string tag = mol[0];
-    return (tag == match) or (tag == matchp);
+    std::shared_ptr<symbol> tag = (*mol)[0];
+    return (*tag == match) or (*tag == matchp);
 }
 
-bool fraglets::isMatchp(const molecule& mol){
-    if (mol.empty()){ return false;}
+bool fraglets::isMatchp(const std::shared_ptr<molecule> mol){
+    if (mol->empty()){ return false;}
 
-    std::string tag = mol[0];
-    return tag == matchp;
+    std::shared_ptr<symbol> tag = (*mol)[0];
+    return *tag == matchp;
 
 
 }
-bool fraglets::isunimol(const molecule& mol){
-    if (mol.empty()){ return false;}
-    std::string head = mol[0];
-    return (unimolTags.find(head) != unimolTags.end()) & !this->isbimol(mol);
+bool fraglets::isunimol(const std::shared_ptr<molecule> mol){
+
+    if (mol->empty()){ return false;}
+    std::shared_ptr<symbol> head = (*mol)[0];
+    return (unimolTags.find(*head) != unimolTags.end()) & !this->isbimol(mol);
 }
 
 double fraglets::propensity(){
-
     this->run_unimol();
-
     this->prop.clear();
     this->wt = 0;
     keyMultisetMap::iterator it = this->active.keyMap.begin();
     for (;it != this->active.keyMap.end();it++){
-        std::string key = it->first;
+        symbol key = it->first;
         std::size_t m = this->active.multk(key);
         std::size_t p = this->passive.multk(key);
         std::size_t w = m*p;
@@ -476,13 +478,13 @@ void fraglets::react(double w){
         if (this->wt < 0){ return;}
         keyMultisetMap::iterator it = this->active.keyMap.begin();
         for (;it != this->active.keyMap.end();it++){
-            std::string key = it->first;
+            symbol key = it->first;
             propMapIterator pit = this->prop.find(key);
             if(pit != this->prop.end()){
                 double propValue = pit->second;
                 if ((propValue > 0) and (w < propValue)){
-                    molecule activeMolecule = this->active.expelrnd(key);
-                    molecule passiveMolecule = this->passive.expelrnd(key);
+                    std::shared_ptr<molecule> activeMolecule = this->active.expelrnd(key);
+                    std::shared_ptr<molecule> passiveMolecule = this->passive.expelrnd(key);
                     opResult result = this->react2(activeMolecule,passiveMolecule);
                     opResult::iterator rIt = result.begin();
                     this->inject_list(result);
@@ -494,33 +496,33 @@ void fraglets::react(double w){
 }
 
 
-opResult fraglets::react1(molecule& mol){
+opResult fraglets::react1(std::shared_ptr<molecule> mol){
 
-    std::string tag = mol[0];
+    std::shared_ptr<symbol> tag = (*mol)[0];
     opResult result;
-    unimolOp f = unimolMap.find(tag)->second; 
+    unimolOp f = unimolMap.find(*tag)->second; 
     result = f(mol);
     return result;
 }
 
-opResult fraglets::react2(molecule& activeMolecule,molecule& passiveMolecule ){
+opResult fraglets::react2(std::shared_ptr<molecule> activeMolecule,std::shared_ptr<molecule> passiveMolecule ){
 
-    std::string tag = activeMolecule[0];
+    std::shared_ptr<symbol> tag = (*activeMolecule)[0];
     opResult result;
-    bimolOp f = bimolMap.find(tag)->second;
+    bimolOp f = bimolMap.find(*tag)->second;
     result = f(activeMolecule,passiveMolecule);
 
 
     if (result.size() == 1){
 
-        std::cout << "[ " <<  molToString(activeMolecule) << " ] , [ " <<  molToString(passiveMolecule) << " ] -> \n[ " <<  molToString(result[0]) << " ]\n";
+        std::cout << "[ " <<  molToString(*activeMolecule) << " ] , [ " <<  molToString(*passiveMolecule) << " ] -> \n[ " <<  molToString(*result[0]) << " ]\n";
         this->addEdge(activeMolecule,result[0],false,isMatchp(activeMolecule));
         this->addEdge(passiveMolecule,result[0],false,false);
 
     }
     if (result.size() == 2){
 
-        std::cout << "[ " <<  molToString(activeMolecule) << " ] , [ " <<  molToString(passiveMolecule) << " ] -> \n[ " <<  molToString(result[0]) << " ] , [ " <<  molToString(result[1]) << " ]\n";
+        std::cout << "[ " <<  molToString(*activeMolecule) << " ] , [ " <<  molToString(*passiveMolecule) << " ] -> \n[ " <<  molToString(*result[0]) << " ] , [ " <<  molToString(*result[1]) << " ]\n";
         this->addEdge(activeMolecule,result[0],false,isMatchp(activeMolecule));
         this->addEdge(activeMolecule,result[1],false,isMatchp(activeMolecule));
         this->addEdge(passiveMolecule,result[0],false,false);
@@ -532,20 +534,19 @@ opResult fraglets::react2(molecule& activeMolecule,molecule& passiveMolecule ){
 int fraglets::run_unimol(){
     int n = 0;
     while (!this->unimol.multiset.empty()){
-        
-        molecule mol = this->unimol.expelrnd();
-        
+
+        std::shared_ptr<molecule> mol = this->unimol.expelrnd();
         opResult result = this->react1(mol);
         const char* const delim = " ";
         if (result.size() == 1){
 
 
-            std::cout << "[ " << molToString(mol) << " ] ->\n[ " << molToString(result[0]) << " ]\n" ;
+            std::cout << "[ " << molToString(*mol) << " ] ->\n[ " << molToString(*result[0]) << " ]\n" ;
             this->addEdge(mol,result[0],true,false);
         }
         if (result.size() == 2){
 
-            std::cout << "[ " << molToString(mol) << " ] ->\n[ " << molToString(result[0]) << " ] , [ " <<  molToString(result[1]) << " ]\n" ;
+            std::cout << "[ " << molToString(*mol) << " ] ->\n[ " << molToString(*result[0]) << " ] , [ " <<  molToString(*result[1]) << " ]\n" ;
             this->addEdge(mol,result[0],true,false);
             this->addEdge(mol,result[1],true,false);
         }
@@ -566,9 +567,9 @@ void fraglets::run_bimol(){
 void fraglets::inject_list(opResult result){
     opResult::iterator it = result.begin();
     for (;it!=result.end();it++){
-        molecule mol = *it;
+        std::shared_ptr<molecule> mol = *it;
         this->inject(mol);
-        this->reactionCoutTable.inject(mol,1);
+        // this->reactionCoutTable.inject(mol,1);
     }
 }
 
@@ -587,7 +588,7 @@ void fraglets::iterate(){
 void fraglets::run(int niter,int molCap){
     for (int i = 1;i<niter;i++){
         // this->trace();
-        std::cout<< "ITER="<<i<<'\n' ;
+        std::cout<< "ITER="<<i<<'\n';
         this->iterate();
         int total = this->active.total + this->passive.total;
 
@@ -707,6 +708,10 @@ void fraglets::drawGraphViz(){
 }
 
 
+// std::shared_ptr<symbol> test(symbol sym){
+//     return std::make_shared<symbol>(sym);
+// }
+
 
 void fraglets::parse(std::string line){
 
@@ -725,11 +730,20 @@ void fraglets::parse(std::string line){
 
     symbol _mol = symbol(line.substr(bracket1+1,bracket2-(bracket1+1)));
 
-    std::istringstream iss(_mol);
-    molecule mol = molecule((std::istream_iterator<std::string>(iss)),std::istream_iterator<std::string>());
+    std::stringstream iss(_mol);
+
+    std::shared_ptr<molecule> mol(new molecule());
+
+    std::istream_iterator<symbol> test{iss},end;
+    std::vector<symbol> tempMol(test,end);
+
+    for (symbol sym : tempMol){
+        std::shared_ptr<symbol> newSymbol(new symbol(sym));
+        mol->push_back(newSymbol);
+    }
+
+        
     this->inject(mol);
-
-
 }
 
 void fraglets::interpret(std::string filename){

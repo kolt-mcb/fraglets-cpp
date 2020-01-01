@@ -16,9 +16,9 @@
 typedef std::map<std::string, double> propMap;
 
 typedef std::map<std::string, double>::iterator propMapIterator;
-typedef std::vector< molecule> opResult;
-typedef std::function<opResult (molecule&, molecule&)> bimolOp;
-typedef std::function<opResult (molecule&)> unimolOp;
+typedef std::vector<std::shared_ptr<molecule>> opResult;
+typedef std::function<opResult (const std::shared_ptr<molecule>,const std::shared_ptr<molecule>)> bimolOp;
+typedef std::function<opResult (const std::shared_ptr<molecule>)> unimolOp;
 
 
 extern std::string match;
@@ -58,23 +58,23 @@ class fraglets {
         std::set<molecule> mappedMols;
         int stackplotIndexCounter = 1;
         moleculeMultiset reactionCoutTable;
-        void addNode(const std::string& mol,const bool& unimol,const bool& matchp,const bool& bimol);
-        void addEdge(const molecule& activeMolecule,const molecule& passiveMolecule,const bool& unimol,const bool& matchp);
+        void addNode(const std::string mol,const bool& unimol,const bool& matchp,const bool& bimol);
+        void addEdge(const std::shared_ptr<molecule> activeMolecule,const std::shared_ptr<molecule> passiveMolecule,const bool& unimol,const bool& matchp);
 
         
 
 
     public:
         std::vector<std::vector<int>> StackplotVector;
-        void inject(molecule& mol,int mult=1);
+        void inject(std::shared_ptr<molecule> mol,int mult=1);
         double propensity();
         int run_unimol();
-        bool isbimol(const molecule& mol);
-        bool isMatchp(const molecule& mol);
-        bool isunimol(const molecule& mol);
+        bool isbimol(const std::shared_ptr<molecule> mol);
+        bool isMatchp(const std::shared_ptr<molecule> mol);
+        bool isunimol(const std::shared_ptr<molecule> mol);
         void react(double w);
-        opResult react1(molecule& mol);
-        opResult react2(molecule& activeMolecule ,molecule& passiveMolecule);
+        opResult react1(std::shared_ptr<molecule> mol);
+        opResult react2(std::shared_ptr<molecule> activeMolecule ,std::shared_ptr<molecule> passiveMolecule);
         void inject_list(opResult);
         void iterate();
         void run(int niter,int molCap);
