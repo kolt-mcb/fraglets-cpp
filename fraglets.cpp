@@ -128,7 +128,7 @@ opResult r_match(const std::shared_ptr<molecule> activeMolecule, const std::shar
 opResult r_matchp(const std::shared_ptr<molecule> activeMolecule, const std::shared_ptr<molecule> passiveMolecule){
     opResult result =  r_match(activeMolecule,passiveMolecule);
     // std::shared_ptr<molecule> newMol = std::make_shared<molecule>(activeMolecule);
-    result.push_back(activeMolecule);
+    result.emplace(result.begin(),activeMolecule);
     return result;
 }
 
@@ -460,6 +460,7 @@ double fraglets::propensity(){
         std::size_t m = this->active.multk(key);
         std::size_t p = this->passive.multk(key);
         std::size_t w = m*p;
+        // std::cout << key << m << p << '\n';
         if (w > 0){
             this->prop[key] = w;
         }
@@ -483,10 +484,11 @@ void fraglets::react(double w){
             if(pit != this->prop.end()){
                 double propValue = pit->second;
                 if ((propValue > 0) and (w < propValue)){
+                    // std::cout << "active \n";
                     std::shared_ptr<molecule> activeMolecule = this->active.expelrnd(key);
+                    // std::cout << "passive \n";
                     std::shared_ptr<molecule> passiveMolecule = this->passive.expelrnd(key);
                     opResult result = this->react2(activeMolecule,passiveMolecule);
-                    opResult::iterator rIt = result.begin();
                     this->inject_list(result);
                     return;
             }
@@ -515,14 +517,14 @@ opResult fraglets::react2(std::shared_ptr<molecule> activeMolecule,std::shared_p
 
     if (result.size() == 1){
 
-        std::cout << "[ " <<  molToString(*activeMolecule) << " ] , [ " <<  molToString(*passiveMolecule) << " ] -> \n[ " <<  molToString(*result[0]) << " ]\n";
+        std::cout << "[ " <<  molToString(*activeMolecule) << "] ,  [ " <<  molToString(*passiveMolecule) << "]  --> \n[ " <<  molToString(*result[0]) << "]\n";
         this->addEdge(activeMolecule,result[0],false,isMatchp(activeMolecule));
         this->addEdge(passiveMolecule,result[0],false,false);
 
     }
     if (result.size() == 2){
 
-        std::cout << "[ " <<  molToString(*activeMolecule) << " ] , [ " <<  molToString(*passiveMolecule) << " ] -> \n[ " <<  molToString(*result[0]) << " ] , [ " <<  molToString(*result[1]) << " ]\n";
+        std::cout << "[ " <<  molToString(*activeMolecule) << "] ,  [ " <<  molToString(*passiveMolecule) << "]  --> \n[ " <<  molToString(*result[0]) << "] ,  [ " <<  molToString(*result[1]) << "]\n";
         this->addEdge(activeMolecule,result[0],false,isMatchp(activeMolecule));
         this->addEdge(activeMolecule,result[1],false,isMatchp(activeMolecule));
         this->addEdge(passiveMolecule,result[0],false,false);
@@ -533,7 +535,7 @@ opResult fraglets::react2(std::shared_ptr<molecule> activeMolecule,std::shared_p
 
 int fraglets::run_unimol(){
     int n = 0;
-    while (!this->unimol.multiset.empty()){
+    while (!true){
 
         std::shared_ptr<molecule> mol = this->unimol.expelrnd();
         opResult result = this->react1(mol);
@@ -541,12 +543,12 @@ int fraglets::run_unimol(){
         if (result.size() == 1){
 
 
-            std::cout << "[ " << molToString(*mol) << " ] ->\n[ " << molToString(*result[0]) << " ]\n" ;
+            std::cout << "[ " << molToString(*mol) << "]  --> \n[ " << molToString(*result[0]) << "]\n" ;
             this->addEdge(mol,result[0],true,false);
         }
         if (result.size() == 2){
 
-            std::cout << "[ " << molToString(*mol) << " ] ->\n[ " << molToString(*result[0]) << " ] , [ " <<  molToString(*result[1]) << " ]\n" ;
+            std::cout << "[ " << molToString(*mol) << "]  --> \n[ " << molToString(*result[0]) << "] ,  [ " <<  molToString(*result[1]) << "]\n" ;
             this->addEdge(mol,result[0],true,false);
             this->addEdge(mol,result[1],true,false);
         }
@@ -588,7 +590,7 @@ void fraglets::iterate(){
 void fraglets::run(int niter,int molCap){
     for (int i = 1;i<niter;i++){
         // this->trace();
-        std::cout<< "ITER="<<i<<'\n';
+        std::cout<< "ITER= "<<i<<'\n';
         this->iterate();
         int total = this->active.total + this->passive.total;
 
@@ -671,10 +673,12 @@ void fraglets::run(int niter,int molCap){
         // }
         if (this->idle){
             // this->drawGraphViz();
+            std::cout<< "idle\n";
             return;
         }
     }
     // this->drawGraphViz();
+    std::cout<< "done\n";
     return;
 }
 

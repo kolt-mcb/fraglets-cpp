@@ -26,6 +26,10 @@ void keyMultiset::expel(symbol key, std::shared_ptr<molecule> mol, int mult){
             int total = mset->expel(mol,mult);
             this->total -= total;
         }
+        else{
+            std::cout<< "error expel\n";
+            exit(0);
+        }
     }
 }
 

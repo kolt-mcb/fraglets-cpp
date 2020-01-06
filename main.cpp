@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
 
     frag.interpret("sort.fra");
 
-    frag.run(3000,2000);
+    frag.run(5000,5000);
 
 
     // QtCharts::QLineSeries *series = new QtCharts::QLineSeries();

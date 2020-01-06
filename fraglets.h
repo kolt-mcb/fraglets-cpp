@@ -5,10 +5,10 @@
 #include <map>
 #include <vector> 
 #include <functional>
-#include <QtWidgets/QApplication>
-#include <QtWidgets/QMainWindow>
-#include <QtCharts/QChartView>
-#include <QtCharts/QLineSeries>
+// #include <QtWidgets/QApplication>
+// #include <QtWidgets/QMainWindow>
+// #include <QtCharts/QChartView>
+// #include <QtCharts/QLineSeries>
 #include <graphviz/gvc.h>
 
 

@@ -17,7 +17,8 @@ int rand_between(int begin,int end){
 
 
 
-void moleculeMultiset::inject(std::shared_ptr<molecule> mol,int mult = 1){
+
+void moleculeMultiset::inject(molecule mol,int mult = 1){
     for (int i = 0; i< mult; i++){
         this->multiset.insert(mol);
     }
@@ -30,9 +31,15 @@ int moleculeMultiset::expel(std::shared_ptr<molecule> mol, int mult = 1){
         // symbol s = (*this->multiset.begin())[0];
         // symbol s2 = mol[0];
         it = this->multiset.find(mol);
+        // std::cout << "expel find " << mol << " " << *it  << (it == this->multiset.end())<< '\n';
         if (it != this->multiset.end()){
-            this->multiset.erase(it);
+            this->multiset.erase(mol);
             total++;
+        }
+        else{
+            std::cout << this->multiset.size();
+            std::cout<<"error mol\n";
+            exit(0);
         }
     }
     return total;
@@ -45,6 +52,7 @@ std::shared_ptr<molecule> moleculeMultiset::rndMol(){
 
     if (this->multiset.empty()){
         // I know this is fucked but what do I do.
+        std::cout << "=====================================================================================\n";
         std::shared_ptr<molecule> mol;
         return mol;
     }else{
@@ -54,8 +62,34 @@ std::shared_ptr<molecule> moleculeMultiset::rndMol(){
         // std::cout<< "rndmol " << mol << " " << this->multiset.size() << "\n";
         // return mol;
 
-        unorderedMultiset::iterator random_it = std::next(std::begin(this->multiset), rand_between(0, this->multiset.size()-1));
+        for (auto r : this->multiset){
+            for (auto k : *r){
+                std::cout << *k << " ";
+            }
+            std::cout << r  << "\n";
+        }
+
+
+        unorderedMultiset::iterator random_it = this->multiset.begin();
+        // 'advance' the iterator n times
+        std::advance(random_it,rand_between(0, this->multiset.size()-1));
+
+
+        for (auto r : this->multiset){
+            for (auto k : *r){
+                std::cout << *k << " ";
+            }
+            std::cout << r  << "\n";
+        }
+        // unorderedMultiset::iterator random_it = std::next(std::begin(this->multiset), rand_between(0, this->multiset.size()-1));
         std::shared_ptr<molecule> mol = *random_it;
+        if (this->multiset.find(mol) == this->multiset.end()){
+            for (auto i : *mol){
+                std::cout << *i << '\n';
+            }
+            std::cout << mol<< "test fail \n";
+            exit(0);
+        }
         return mol;
     }
 }
