@@ -7,54 +7,83 @@
 #include <memory>
 
 
+
 int rand_between(int begin, int end);
 
 typedef std::string symbol;
-typedef std::shared_ptr<std::vector<std::shared_ptr<symbol>>> molecule_pointer;
-typedef std::vector<molecule> moleculeVector;
+typedef std::vector<std::shared_ptr<symbol>> _molecule;
 
-
-class molecule {
+class molecule{
     public:
-        std::shared_ptr<std::vector<std::shared_ptr<symbol>>> mol_ptr;
+        bool operator==(const molecule&) const;
+        molecule();
+        ~molecule();
+        _molecule vector;
 
-        bool operator()(const molecule first)
-        {   
-            // std::cout << first.mol_ptr << " " << "\n";
-            return !std::equal(this->mol_ptr->begin(), this->mol_ptr->end(), first.mol_ptr->begin(),
-                [](std::shared_ptr<symbol> item1, std::shared_ptr<symbol> item2) -> bool{
-                std::cout<< "wtf" << *item1 << " " << *item2 <<(*item1 == *item2)<<'\n';
-                return (*item1 == *item2);
-            });
-        }
 };
 
 
-// struct ptr_compare 
-// {
-//     bool operator()(const std::shared_ptr<molecule> first,const std::shared_ptr<molecule> second)
-//     {   
-//         std::cout << first << " " << second << "\n";
-//         return !equal(first->begin(), first->end(), second->begin(),
-//             [](std::shared_ptr<symbol> item1, std::shared_ptr<symbol> item2) -> bool{
-//             std::cout<< "wtf" << *item1 << " " << *item2 <<(*item1 == *item2)<<'\n';
-//             return (*item1 == *item2);
-//         });
-//     }
-// };
+template <class T>
+inline void hash_combine(std::size_t& seed, T const& v)
+{
+    seed ^= std::hash<T>()(v) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+}
 
-typedef std::unordered_multiset<molecule>   unorderedMultiset;
+
+
+
+namespace std {
+
+  template <>
+  struct hash<molecule>
+  {
+    std::size_t operator()(const molecule& k) const
+    {
+      using std::vector;
+      using std::size_t;
+      using std::hash;
+
+      // Compute individual hash values for first,
+      // second and third and combine them using XOR
+      // and bit shifting:
+
+      size_t size = k.vector.size();
+      size_t seed = 0;
+      for (size_t i = 0; i < size; i++){
+                //Combine the hash of the current vector with the hashes of the previous ones
+                hash_combine(seed, k.vector[i]);
+      }
+      return seed;
+
+    //   return ((hash<_molecule*>()(&k.vector) << 1));
+    }
+  };
+
+}
+
+
+typedef std::shared_ptr<molecule> molecule_pointer;
+typedef std::vector<molecule> moleculeVector;
+//I cans makes this's ones faster.
+typedef std::unordered_map<molecule,molecule_pointer> moleculeMap;
+typedef std::unordered_multiset<molecule_pointer>   unorderedMultiset;
+
+
+
 
 
 class moleculeMultiset {
 
+
     public:
-        // moleculeMultiset();
-        void inject(molecule& mol, int mul);
-        int expel(molecule& mol, int mult);
-        molecule& expelrnd();
-        molecule& rndMol();
-        int mult(molecule mol);
+        moleculeMultiset();
+        ~moleculeMultiset();
+        void inject(molecule_pointer mol, int mul);
+        int expel(const molecule_pointer mol, int mult);
+        const molecule_pointer expelrnd();
+        const molecule_pointer rndMol();
+        int mult(molecule_pointer& mol);
         int mult();
         unorderedMultiset multiset;
+
 };

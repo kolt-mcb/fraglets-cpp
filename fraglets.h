@@ -16,9 +16,9 @@
 typedef std::map<std::string, double> propMap;
 
 typedef std::map<std::string, double>::iterator propMapIterator;
-typedef std::vector<std::shared_ptr<molecule>> opResult;
-typedef std::function<opResult (const std::shared_ptr<molecule>,const std::shared_ptr<molecule>)> bimolOp;
-typedef std::function<opResult (const std::shared_ptr<molecule>)> unimolOp;
+typedef std::vector<molecule_pointer> opResult;
+typedef std::function<opResult (const molecule_pointer,const molecule_pointer)> bimolOp;
+typedef std::function<opResult (const molecule_pointer)> unimolOp;
 
 
 extern std::string match;
@@ -44,6 +44,7 @@ extern std::unordered_set<std::string> unimolTags;
 
 class fraglets {
     private:
+        moleculeMap activeMap, passiveMap, unimolMap;
         keyMultiset active, passive;
         moleculeMultiset unimol;
         // ops ops;
@@ -54,27 +55,31 @@ class fraglets {
         Agraph_t* subgraph = agsubg(graph, "cluster", 1);
         std::map <symbol,Agnode_t*> nodesTable;
         std::map <symbol,Agedge_t*> edgeTable;
-        std::map<int,molecule>  stackplotIndexMap;
-        std::set<molecule> mappedMols;
+        std::map<int,molecule_pointer>  stackplotIndexMap;
+        std::set<molecule_pointer> mappedMols;
         int stackplotIndexCounter = 1;
         moleculeMultiset reactionCoutTable;
         void addNode(const std::string mol,const bool& unimol,const bool& matchp,const bool& bimol);
-        void addEdge(const std::shared_ptr<molecule> activeMolecule,const std::shared_ptr<molecule> passiveMolecule,const bool& unimol,const bool& matchp);
+        void addEdge(const molecule_pointer activeMolecule,const molecule_pointer passiveMolecule,const bool& unimol,const bool& matchp);
+        const molecule_pointer makeUniqueUnimol(const molecule_pointer);
+        const molecule_pointer makeUniqueActive(const molecule_pointer);
+        const molecule_pointer makeUniquePassive(const molecule_pointer);
+
 
         
 
 
     public:
         std::vector<std::vector<int>> StackplotVector;
-        void inject(std::shared_ptr<molecule> mol,int mult=1);
+        void inject(const molecule_pointer mol,int mult=1);
         double propensity();
         int run_unimol();
-        bool isbimol(const std::shared_ptr<molecule> mol);
-        bool isMatchp(const std::shared_ptr<molecule> mol);
-        bool isunimol(const std::shared_ptr<molecule> mol);
+        bool isbimol(const molecule_pointer mol);
+        bool isMatchp(const molecule_pointer mol);
+        bool isunimol(const molecule_pointer mol);
         void react(double w);
-        opResult react1(std::shared_ptr<molecule> mol);
-        opResult react2(std::shared_ptr<molecule> activeMolecule ,std::shared_ptr<molecule> passiveMolecule);
+        opResult react1(const molecule_pointer mol);
+        opResult react2(const molecule_pointer activeMolecule ,const molecule_pointer passiveMolecule);
         void inject_list(opResult);
         void iterate();
         void run(int niter,int molCap);
@@ -87,6 +92,7 @@ class fraglets {
         void interpret(std::string filename);
         void trace();
         void drawGraphViz();
+        
 
 
         

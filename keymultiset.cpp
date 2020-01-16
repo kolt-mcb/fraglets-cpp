@@ -2,8 +2,8 @@
 
 
 
-void keyMultiset::inject(std::shared_ptr<symbol> key, std::shared_ptr<molecule> mol, int mult){
-    if ((key->empty()) or (mol->empty())){return;}
+void keyMultiset::inject(std::shared_ptr<symbol> key,const molecule_pointer  mol, int mult){
+    if ((key->empty()) or (mol->vector.empty())){return;}
     keyMultisetMap::iterator it = this->keyMap.find(*key);
     moleculeMultiset* mset;
     if (it == this->keyMap.end()){
@@ -17,7 +17,7 @@ void keyMultiset::inject(std::shared_ptr<symbol> key, std::shared_ptr<molecule> 
     this->total += mult;
 }
 
-void keyMultiset::expel(symbol key, std::shared_ptr<molecule> mol, int mult){
+void keyMultiset::expel(symbol key,const molecule_pointer mol, int mult){
     if ((key.empty()) or (mult < 0)){ return;}
     else{
         keyMultisetMap::iterator it = this->keyMap.find(key);
@@ -33,17 +33,17 @@ void keyMultiset::expel(symbol key, std::shared_ptr<molecule> mol, int mult){
     }
 }
 
-std::shared_ptr<molecule> keyMultiset::rndmol(symbol key){
+const molecule_pointer keyMultiset::rndmol(symbol key){
     keyMultisetMap::iterator it = this->keyMap.find(key);
     // if (it != this->keyMap.end()){
         moleculeMultiset mset = *it->second;
-        std::shared_ptr<molecule> mol = mset.rndMol();
+        const molecule_pointer mol = mset.rndMol();
         return mol;
     // }
 }
 
-std::shared_ptr<molecule> keyMultiset::expelrnd(symbol key){
-    std::shared_ptr<molecule> mol = this->rndmol(key);
+const molecule_pointer keyMultiset::expelrnd(symbol key){
+    const molecule_pointer mol = this->rndmol(key);
     this->expel(key,mol);
     return mol;
 };
