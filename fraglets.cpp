@@ -7,6 +7,7 @@
 #include <string>
 #include <sstream>
 #include <iterator>
+#include <cstring>
 
 
 
@@ -90,11 +91,19 @@ const molecule_pointer fraglets::makeUniquePassive(const molecule_pointer mol){
     return mol;
 }
 
-void fraglets::addNode(const std::string mol,const bool& unimol,const bool& matchp,const bool& bimol){
-    char* c_mol = new char[mol.length() + 1];
+char *convert(const std::shared_ptr<symbol> s)
+{
+   char *pc = new char[s->size()+1];
+   std::strcpy(pc, s->c_str());
+   return pc; 
+}
+
+void fraglets::addNode(const molecule_pointer mol,const bool& unimol,const bool& matchp,const bool& bimol){
+    char* c_mol = new char[mol->vector.size() + 1];
     // mol.copy(c_mol,mol.size(),mol.front());
-    std::copy(mol.begin(),mol.end(),c_mol);
-    c_mol[mol.size()] = '\0';
+    std::transform(mol->vector.begin(),mol->vector.end(),std::back_insert_iterator(c_mol),convert);
+
+    // c_mol[mol->vector.size()] = '\0';
     Agnode_t* node;
     if (matchp){
         node =  agnode(this->subgraph,c_mol,TRUE);
@@ -115,19 +124,19 @@ void fraglets::addNode(const std::string mol,const bool& unimol,const bool& matc
 
 void fraglets::addEdge(const molecule_pointer mol,const molecule_pointer resultMol,const bool& unimol,const bool& matchp){
 
-    std::string molString = molToString(mol);
+    // std::string molString = molToString(mol);
 
-    std::string resultMolString =  molToString(resultMol);
+    // std::string resultMolString =  molToString(resultMol);
   
 
-    if (this->nodesTable.find(molString) == this->nodesTable.end()){
-        this->addNode(molString,isunimol(mol),isMatchp(mol),isbimol(mol));
+    if (this->nodesTable.find(mol) == this->nodesTable.end()){
+        this->addNode(mol,isunimol(mol),isMatchp(mol),isbimol(mol));
     }
-    if (this->nodesTable.find(resultMolString) == this->nodesTable.end()){
-        this->addNode(resultMolString,isunimol(resultMol),isMatchp(resultMol),isbimol(resultMol));
+    if (this->nodesTable.find(resultMol) == this->nodesTable.end()){
+        this->addNode(resultMol,isunimol(resultMol),isMatchp(resultMol),isbimol(resultMol));
     }
-    Agnode_t* tailNode = nodesTable[resultMolString];
-    Agnode_t* headNode = nodesTable[molString];
+    Agnode_t* tailNode = nodesTable[resultMol];
+    Agnode_t* headNode = nodesTable[mol];
     Agedge_t* edge = agedge(this->graph,headNode,tailNode,"",true);
     if (unimol){
         agsafeset(edge,"color","blue","blue");
@@ -137,7 +146,7 @@ void fraglets::addEdge(const molecule_pointer mol,const molecule_pointer resultM
     }else{
         agsafeset(edge,"color","black","black");
     }
-    this->edgeTable[molString] = edge;
+    this->edgeTable[mol] = edge;
 }
 opResult r_match(const molecule_pointer activeMolecule, const molecule_pointer passiveMolecule){
     opResult result;
@@ -723,12 +732,12 @@ void fraglets::run(int niter,int molCap){
         //         total = this->active.total + this->passive.total;
         // }
         if (this->idle){
-            // this->drawGraphViz();
+            this->drawGraphViz();
             std::cout<< "idle\n";
             return;
         }
     }
-    // this->drawGraphViz();
+    this->drawGraphViz();
     std::cout<< "done\n";
     return;
 }
@@ -737,14 +746,14 @@ void fraglets::run(int niter,int molCap){
 
 void fraglets::drawGraphViz(){
 
-        // for(auto edge : this->edgeTable){
-    //     int reactionCount = ((this->reactionCoutTable.mult({""})/this->reactionCoutTable.mult(edge.first)))+1;
+        for(auto edge : this->edgeTable){
+        int reactionCount = ((this->reactionCoutTable.mult()/this->reactionCoutTable.mult(edge.first)))+1;
 
-    //     std::string s = std::to_string(reactionCount);
-    //     char  *weight = const_cast<char *>(s.c_str());
-    //     agsafeset(edge.second,"weight",weight,weight);
-    //     agsafeset(edge.second,"penwidth",weight,weight);
-    // }
+        std::string s = std::to_string(reactionCount);
+        char  *weight = const_cast<char *>(s.c_str());
+        agsafeset(edge.second,"weight",weight,weight);
+        agsafeset(edge.second,"penwidth",weight,weight);
+    }
 
     GVC_t* graphContext = gvContext();
 
