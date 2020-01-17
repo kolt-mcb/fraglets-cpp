@@ -91,19 +91,15 @@ const molecule_pointer fraglets::makeUniquePassive(const molecule_pointer mol){
     return mol;
 }
 
-char *convert(const std::shared_ptr<symbol> s)
-{
-   char *pc = new char[s->size()+1];
-   std::strcpy(pc, s->c_str());
-   return pc; 
-}
 
 void fraglets::addNode(const molecule_pointer mol,const bool& unimol,const bool& matchp,const bool& bimol){
-    char* c_mol = new char[mol->vector.size() + 1];
-    // mol.copy(c_mol,mol.size(),mol.front());
-    std::transform(mol->vector.begin(),mol->vector.end(),std::back_insert_iterator(c_mol),convert);
+    symbol _mol = molToString(mol);
+    char* c_mol = &_mol[0];//new char[_mol.size() + 1];
 
-    // c_mol[mol->vector.size()] = '\0';
+    //_mol.copy(c_mol,_mol.size(),_mol.front());
+    // std::transform(mol->vector.begin(),mol->vector.end(),std::back_inserter(c_mol),convert);
+
+    //c_mol[mol->vector.size()] = '\0';
     Agnode_t* node;
     if (matchp){
         node =  agnode(this->subgraph,c_mol,TRUE);
@@ -732,12 +728,12 @@ void fraglets::run(int niter,int molCap){
         //         total = this->active.total + this->passive.total;
         // }
         if (this->idle){
-            this->drawGraphViz();
+            //this->drawGraphViz();
             std::cout<< "idle\n";
             return;
         }
     }
-    this->drawGraphViz();
+    //this->drawGraphViz();
     std::cout<< "done\n";
     return;
 }
@@ -747,7 +743,9 @@ void fraglets::run(int niter,int molCap){
 void fraglets::drawGraphViz(){
 
         for(auto edge : this->edgeTable){
-        int reactionCount = ((this->reactionCoutTable.mult()/this->reactionCoutTable.mult(edge.first)))+1;
+
+        auto t =edge.first;
+        int reactionCount = ((this->reactionCoutTable.mult()/(this->reactionCoutTable.mult(t)+1)))+1;
 
         std::string s = std::to_string(reactionCount);
         char  *weight = const_cast<char *>(s.c_str());
