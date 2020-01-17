@@ -13,8 +13,8 @@ MAKEFILE      = Makefile
 CC            = gcc
 CXX           = g++
 DEFINES       = -DQT_DEPRECATED_WARNINGS -DQT_NO_DEBUG -DQT_CHARTS_LIB -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB
-CFLAGS        = -pipe -O2 -Wall -W -D_REENTRANT -fPIC $(DEFINES)
-CXXFLAGS      = -pipe -O2 -Wall -W -D_REENTRANT -fPIC $(DEFINES)
+CFLAGS        = -pipe -O3 -Wall -W -D_REENTRANT -fPIC $(DEFINES)
+CXXFLAGS      = -pipe -std=c++17 -O3 -Wall -W -D_REENTRANT -fPIC $(DEFINES)
 INCPATH       = -I. -I. -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5 -isystem /usr/include/x86_64-linux-gnu/qt5/QtCharts -isystem /usr/include/x86_64-linux-gnu/qt5/QtWidgets -isystem /usr/include/x86_64-linux-gnu/qt5/QtGui -isystem /usr/include/x86_64-linux-gnu/qt5/QtCore -I. -isystem /usr/include/libdrm -I/usr/lib/x86_64-linux-gnu/qt5/mkspecs/linux-g++
 QMAKE         = /usr/lib/qt5/bin/qmake
 DEL_FILE      = rm -f
@@ -35,9 +35,9 @@ MOVE          = mv -f
 TAR           = tar -cf
 COMPRESS      = gzip -9f
 DISTNAME      = src1.0.0
-DISTDIR = /home/kolt/Documents/workspace/fraglets-cpp/src/.tmp/src1.0.0
+DISTDIR = /home/kolt/Documents/workspace/fraglets-cpp/.tmp/src1.0.0
 LINK          = g++
-LFLAGS        = -Wl,-O1
+LFLAGS        = -Wl,-O3
 LIBS          = $(SUBLIBS) -lgvc -lcgraph -lcdt -lQt5Charts -lQt5Widgets -lQt5Gui -lQt5Core -lGL -lpthread 
 AR            = ar cqs
 RANLIB        = 
@@ -366,7 +366,7 @@ compiler_moc_predefs_make_all: moc_predefs.h
 compiler_moc_predefs_clean:
 	-$(DEL_FILE) moc_predefs.h
 moc_predefs.h: /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp
-	g++ -pipe -O2 -Wall -W -dM -E -o moc_predefs.h /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp
+	g++ -pipe -std=c++17 -O3 -Wall -W -dM -E -o moc_predefs.h /usr/lib/x86_64-linux-gnu/qt5/mkspecs/features/data/dummy.cpp
 
 compiler_moc_header_make_all:
 compiler_moc_header_clean:

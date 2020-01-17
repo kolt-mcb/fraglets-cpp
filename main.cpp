@@ -13,48 +13,54 @@ int main(int argc, char *argv[]) {
 
     
     fraglets frag;
+    symbol mol = "fork nop z match z split match z fork fork fork nop z * split match z fork fork fork nop z * copy z";
+    frag.parse(mol);
 
-    // molecule mol = {"fork nop z match z split match z fork fork fork nop z * split match z fork fork fork nop z * copy z"};
-    // frag.inject(mol);
+    for (int i = 0; i< 50; i++){
+        frag.parse(mol);
 
-    // for (int i = 0; i< 50; i++){
-    //     frag.inject(mol);
+        frag.parse("z");
 
-    //     frag.inject({"z"});
+    }
+    symbol mol2 = "perm z ";
+    std::string::iterator alphaIt2;
+    std::unordered_set<std::string>::iterator uIt;
+    for (alphaIt2 = alphabet.begin();alphaIt2!=alphabet.end();alphaIt2++){
+        symbol newMol = mol2 + *alphaIt2;
+        frag.parse(newMol);
+        newMol = mol2 + " z " + *alphaIt2;
+        frag.parse(newMol);
 
-    // }
-    // molecule mol2 = {"matchp","z"};
-    // std::string::iterator alphaIt2;
-    // std::unordered_set<std::string>::iterator uIt;
-    // for (alphaIt2 = alphabet.begin();alphaIt2!=alphabet.end();alphaIt2++){
-    //     molecule newMol = mol2 + *alphaIt2;
-    //     frag.inject(newMol);
-    //     newMol = mol2 + "z " + *alphaIt2;
-    //     frag.inject(newMol);
+    }
+    for (uIt = unimolTags.begin();uIt!=unimolTags.end();uIt++){
 
-    // }
-    // for (uIt = unimolTags.begin();uIt!=unimolTags.end();uIt++){
+        symbol newMolTag = mol2  + *uIt;
+        frag.parse(newMolTag);
+        newMolTag = mol2 + " z " +*uIt;
+        frag.parse(newMolTag);
+    }
+    for (alphaIt2 = alphabet.begin();alphaIt2!=alphabet.end();alphaIt2++){
+        symbol newMol2 = mol2 + " match " + *alphaIt2;
+        frag.parse(newMol2);
+        newMol2 = mol2 + " z " + "match " + *alphaIt2;
+        frag.parse(newMol2);
 
-    //     molecule newMolTag = mol2  + *uIt;
-    //     frag.inject(newMolTag);
-    //     newMolTag = mol2 + "z " +*uIt;
-    //     frag.inject(newMolTag);
-    // }
-    // for (alphaIt2 = alphabet.begin();alphaIt2!=alphabet.end();alphaIt2++){
-    //     molecule newMol2 = mol2 + "match ";// + *alphaIt2;
-    //     frag.inject(newMol2);
-    //     newMol2 = mol2 + "z " + "match"; //+ *alphaIt2;
-    //     frag.inject(newMol2);
+        symbol newMol3 = mol2 + " matchp " + *alphaIt2;
+        frag.parse(newMol3);
+        newMol3 = mol2 + " z " + "matchp " + *alphaIt2;
+        frag.parse(newMol3);
 
-    // }
+    }
 
 
 
 
 
-    frag.interpret("sort.fra");
 
-    frag.run(5000,5000);
+
+    // frag.interpret("sort.fra");
+
+    frag.run(1000,1400);
 
 
     // QtCharts::QLineSeries *series = new QtCharts::QLineSeries();

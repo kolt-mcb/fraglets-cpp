@@ -5,27 +5,31 @@
 #include <cstddef>
 #include <fstream>
 #include <string>
-#include <sstream>
 #include <iterator>
 #include <cstring>
 
 
 
-std::string match  = "match" ;
-std::string matchp =  "matchp";
-std::string dup    = "dup";
-std::string exch   = "exch";
-std::string pop    = "pop";
-std::string nop    = "nop";
-std::string nul    = "nul";
-std::string split  = "split";
-std::string send   = "send";
-std::string fork   = "fork";
-std::string empty  = "empty";
-std::string length = "length";
-std::string lt     = "lt";
-std::string pop2   = "pop2";
-std::string copy   = "copy";
+symbol match  = "match" ;
+symbol matchp =  "matchp";
+symbol dup    = "dup";
+symbol exch   = "exch";
+symbol pop    = "pop";
+symbol nop    = "nop";
+symbol nul    = "nul";
+symbol split  = "split";
+symbol send   = "send";
+symbol fork   = "fork";
+symbol empty  = "empty";
+symbol length = "length";
+symbol lt     = "lt";
+symbol pop2   = "pop2";
+symbol copy   = "copy";
+symbol perm   = "perm";
+
+std::unordered_set<std::string> bimolTags = {match,matchp,perm};
+std::unordered_set<std::string> unimolTags = {exch,pop,nop,split,length,fork,empty,pop2,copy,lt};
+
 
 
 bool isNumber(const std::string& mol){
@@ -55,9 +59,6 @@ symbol molToString(const molecule_pointer mol){
 
 }
 
-
-std::unordered_set<std::string> bimolTags = {match,matchp};
-std::unordered_set<std::string> unimolTags = {exch,pop,nop,split,length,fork,empty,pop2,copy,lt};
 
 
 
@@ -126,10 +127,10 @@ void fraglets::addEdge(const molecule_pointer mol,const molecule_pointer resultM
   
 
     if (this->nodesTable.find(mol) == this->nodesTable.end()){
-        this->addNode(mol,isunimol(mol),isMatchp(mol),isbimol(mol));
+        this->addNode(mol,isunimol(mol),isperm(mol),isbimol(mol));
     }
     if (this->nodesTable.find(resultMol) == this->nodesTable.end()){
-        this->addNode(resultMol,isunimol(resultMol),isMatchp(resultMol),isbimol(resultMol));
+        this->addNode(resultMol,isunimol(resultMol),isperm(resultMol),isbimol(resultMol));
     }
     Agnode_t* tailNode = nodesTable[resultMol];
     Agnode_t* headNode = nodesTable[mol];
@@ -155,6 +156,13 @@ opResult r_match(const molecule_pointer activeMolecule, const molecule_pointer p
     return result;
 }
 
+
+opResult r_perm(const molecule_pointer activeMolecule, const molecule_pointer passiveMolecule){
+    opResult result =  r_match(activeMolecule,passiveMolecule);
+    // molecule newMol = std::make_shared<molecule_pointer( activeMolecule);
+    result.emplace(result.begin(),activeMolecule);
+    return result;
+}
 
 opResult r_matchp(const molecule_pointer activeMolecule, const molecule_pointer passiveMolecule){
     opResult result =  r_match(activeMolecule,passiveMolecule);
@@ -415,7 +423,7 @@ opResult r_pop2(const molecule_pointer mol){
 }
 
 
-std::unordered_map<std::string,bimolOp>  const bimolOpMap = {{match,r_match},{matchp,r_matchp}};
+std::unordered_map<std::string,bimolOp>  const bimolOpMap = {{match,r_match},{matchp,r_matchp},{perm,r_perm}};
 std::unordered_map<std::string,unimolOp> const unimolOpMap = {{dup,r_dup},
                                                       {exch,r_exch},
                                                       {pop,r_pop},
@@ -453,7 +461,6 @@ double random_double(){
 void fraglets::inject(const molecule_pointer mol,int mult){
     if (mol->vector.empty() or mult < 1){return;}
     if (mol->vector.size()>= 1){
-        
         if (this->isbimol(mol)){
                 const molecule_pointer newMol = this->makeUniqueActive(mol);
                 std::shared_ptr<symbol> key = newMol->vector[1];
@@ -482,10 +489,16 @@ void fraglets::inject(const molecule_pointer mol,int mult){
 }
 
 bool fraglets::isbimol(const molecule_pointer mol){
+    if (mol->vector.size() < 2){ return false;}
+    std::shared_ptr<symbol> tag = mol->vector[0];
+    return (*tag == match) or (*tag == matchp) or (*tag == perm);
+}
+
+bool fraglets::isperm(const molecule_pointer mol){
     if (mol->vector.empty()){ return false;}
 
     std::shared_ptr<symbol> tag = mol->vector[0];
-    return (*tag == match) or (*tag == matchp);
+    return (*tag == perm);
 }
 
 bool fraglets::isMatchp(const molecule_pointer mol){
@@ -617,6 +630,7 @@ int fraglets::run_unimol(){
 
 void fraglets::run_bimol(){
     if (this->wt <= 0){return;}
+    std::cout << "test2\n";
     double w = random_double() * this->wt;
     this->react(w);
 }
@@ -634,6 +648,7 @@ void fraglets::inject_list(opResult result){
 
 void fraglets::iterate(){
     this->propensity();
+    std::cout << "test\n";
     if (!this->idle){
         this->run_bimol();
     }
@@ -728,12 +743,12 @@ void fraglets::run(int niter,int molCap){
         //         total = this->active.total + this->passive.total;
         // }
         if (this->idle){
-            //this->drawGraphViz();
+            this->drawGraphViz();
             std::cout<< "idle\n";
             return;
         }
     }
-    //this->drawGraphViz();
+    this->drawGraphViz();
     std::cout<< "done\n";
     return;
 }
@@ -742,16 +757,16 @@ void fraglets::run(int niter,int molCap){
 
 void fraglets::drawGraphViz(){
 
-        for(auto edge : this->edgeTable){
+    // for(auto edge : this->edgeTable){
 
-        auto t =edge.first;
-        int reactionCount = ((this->reactionCoutTable.mult()/(this->reactionCoutTable.mult(t)+1)))+1;
+    //     auto t =edge.first;
+    //     int reactionCount = ((this->reactionCoutTable.mult()/(this->reactionCoutTable.mult(t)+1)))+1;
 
-        std::string s = std::to_string(reactionCount);
-        char  *weight = const_cast<char *>(s.c_str());
-        agsafeset(edge.second,"weight",weight,weight);
-        agsafeset(edge.second,"penwidth",weight,weight);
-    }
+    //     std::string s = std::to_string(reactionCount);
+    //     char  *weight = const_cast<char *>(s.c_str());
+    //     agsafeset(edge.second,"weight",weight,weight);
+    //     agsafeset(edge.second,"penwidth",weight,weight);
+    // }
 
     GVC_t* graphContext = gvContext();
 

@@ -75,6 +75,7 @@ class fraglets {
         double propensity();
         int run_unimol();
         bool isbimol(const molecule_pointer mol);
+        bool isperm(const molecule_pointer mol);
         bool isMatchp(const molecule_pointer mol);
         bool isunimol(const molecule_pointer mol);
         void react(double w);
