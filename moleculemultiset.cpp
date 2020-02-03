@@ -39,8 +39,7 @@ int moleculeMultiset::expel(const molecule_pointer mol, int mult = 1){
             total++;
         }
         else{
-            std::cout<<"error mol\n";
-            exit(0);
+            return total;
         }
     }
     return total;
@@ -51,12 +50,11 @@ int moleculeMultiset::expel(const molecule_pointer mol, int mult = 1){
 const molecule_pointer moleculeMultiset::rndMol(){
 
     
-    // if (this->multiset.empty()){
-    //     // I know this is fucked but what do I do.
-    //     std::cout << "=====================================================================================\n";
-    //     molecule mol;
-    //     return mol;
-    // }else{
+    if (this->multiset.empty()){
+        // I know this is fucked but what do I do.
+        molecule_pointer mol = std::make_shared<molecule>();
+        return mol;
+    }else{
 
         // unorderedMultiset::iterator it = this->multiset.begin();
         // molecule mol = *it;
@@ -70,11 +68,9 @@ const molecule_pointer moleculeMultiset::rndMol(){
         //     std::cout << r.mol_ptr  << "\n";
         // }
 
-
         unorderedMultiset::iterator random_it = this->multiset.begin();
         // 'advance' the iterator n times
         std::advance(random_it,rand_between(0, this->multiset.size()-1));
-
 
 
         // for (auto r : this->multiset){
@@ -96,7 +92,7 @@ const molecule_pointer moleculeMultiset::rndMol(){
         auto t = *random_it;
         return *random_it;
     }
-// }
+}
 
 
 const molecule_pointer moleculeMultiset::expelrnd(){
@@ -128,7 +124,7 @@ molecule::~molecule(){
 };
 
 bool molecule::operator==(const molecule& other) const{
-    std::equal(this->vector.begin(), this->vector.end(), other.vector.begin(),
+    return std::equal(this->vector.begin(), this->vector.end(), other.vector.begin(),
     [](const std::shared_ptr<symbol>& item1, const std::shared_ptr<symbol>
     & item2) -> bool{
         return (*item1 == *item2);

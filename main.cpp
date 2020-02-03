@@ -60,7 +60,7 @@ int main(int argc, char *argv[]) {
 
     // frag.interpret("sort.fra");
 
-    frag.run(1000,1400);
+    frag.run(100000,200);
 
 
     // QtCharts::QLineSeries *series = new QtCharts::QLineSeries();
