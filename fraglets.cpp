@@ -103,10 +103,10 @@ const molecule_pointer fraglets::makeUniquePassive(const molecule_pointer mol){
 }
 
 
-void fraglets::addNode(const molecule_pointer mol,const bool& unimol,const bool& matchp,const bool& bimol){
-    symbol _mol = molToString(mol);
-    char* c_mol = &_mol[0];//new char[_mol.size() + 1];
-
+void fraglets::addNode(symbol mol,const bool& unimol,const bool& matchp,const bool& bimol){
+    // auto c_mol = mol.c_str();//new char[_mol.size() + 1];
+    
+    char *c_mol = &mol[0];
     //_mol.copy(c_mol,_mol.size(),_mol.front());
     // std::transform(mol->vector.begin(),mol->vector.end(),std::back_inserter(c_mol),convert);
 
@@ -130,20 +130,19 @@ void fraglets::addNode(const molecule_pointer mol,const bool& unimol,const bool&
 }
 
 void fraglets::addEdge(const molecule_pointer mol,const molecule_pointer resultMol,const bool& unimol,const bool& matchp){
+    std::string molString = molToString(mol);
 
-    // std::string molString = molToString(mol);
-
-    // std::string resultMolString =  molToString(resultMol);
+    std::string resultMolString =  molToString(resultMol);
   
 
-    if (this->nodesTable.find(mol) == this->nodesTable.end()){
-        this->addNode(mol,isunimol(mol),isperm(mol),isbimol(mol));
+    if (this->nodesTable.find(molString) == this->nodesTable.end()){
+        this->addNode(molString,this->isunimol(mol),this->isperm(mol),this->isbimol(mol));
     }
-    if (this->nodesTable.find(resultMol) == this->nodesTable.end()){
-        this->addNode(resultMol,isunimol(resultMol),isperm(resultMol),isbimol(resultMol));
+    if (this->nodesTable.find(resultMolString) == this->nodesTable.end()){
+        this->addNode(resultMolString,this->isunimol(resultMol),this->isperm(resultMol),this->isbimol(resultMol));
     }
-    Agnode_t* tailNode = nodesTable[resultMol];
-    Agnode_t* headNode = nodesTable[mol];
+    Agnode_t* tailNode = nodesTable[resultMolString];
+    Agnode_t* headNode = nodesTable[molString];
     Agedge_t* edge = agedge(this->graph,headNode,tailNode,"",true);
     if (unimol){
         agsafeset(edge,"color","blue","blue");
@@ -152,69 +151,69 @@ void fraglets::addEdge(const molecule_pointer mol,const molecule_pointer resultM
     }else{
         agsafeset(edge,"color","black","black");
     }
-    this->edgeTable[mol] = edge;
+    this->edgeTable[molString] = edge;
 }
 
 
-opResult r_plus(const molecule_pointer activeMolecule){
-    opResult result;
-    molecule_pointer newMol = std::make_shared<molecule>();
-    newMol->vector.push_back(activeMolecule->vector[1]);
-    if (isNumber(*activeMolecule->vector[2]) & isNumber(*activeMolecule->vector[3])){
-        float one = std::stof(*activeMolecule->vector[2]);
-        float two = std::stof(*activeMolecule->vector[3]);
-        float result = one + two;
-        std::shared_ptr<symbol> s = std::make_shared<symbol>(std::to_string(result));
-        newMol->vector.push_back(s);
-    }
-    else{
-        newMol->vector.push_back(activeMolecule->vector[2]);
-        newMol->vector.push_back(activeMolecule->vector[3]);
-    }
-    newMol->vector.insert(newMol->vector.begin(),activeMolecule->vector.begin()+4,activeMolecule->vector.end());
-    result.push_back(newMol);
-    return result;
-}
+// opResult r_plus(const molecule_pointer activeMolecule){
+//     opResult result;
+//     molecule_pointer newMol = std::make_shared<molecule>();
+//     newMol->vector.push_back(activeMolecule->vector[1]);
+//     if (isNumber(*activeMolecule->vector[2]) & isNumber(*activeMolecule->vector[3])){
+//         float one = std::stof(*activeMolecule->vector[2]);
+//         float two = std::stof(*activeMolecule->vector[3]);
+//         float result = one + two;
+//         std::shared_ptr<symbol> s = std::make_shared<symbol>(std::to_string(result));
+//         newMol->vector.push_back(s);
+//     }
+//     else{
+//         newMol->vector.push_back(activeMolecule->vector[2]);
+//         newMol->vector.push_back(activeMolecule->vector[3]);
+//     }
+//     newMol->vector.insert(newMol->vector.begin(),activeMolecule->vector.begin()+4,activeMolecule->vector.end());
+//     result.push_back(newMol);
+//     return result;
+// }
 
-opResult r_minus(const molecule_pointer activeMolecule){
-    opResult result;
-    molecule_pointer newMol = std::make_shared<molecule>();
-    newMol->vector.push_back(activeMolecule->vector[1]);
-    if (isNumber(*activeMolecule->vector[2]) & isNumber(*activeMolecule->vector[3])){
-        float one = std::stof(*activeMolecule->vector[2]);
-        float two = std::stof(*activeMolecule->vector[3]);
-        float result = one - two;
-        std::shared_ptr<symbol> s = std::make_shared<symbol>(std::to_string(result));
-        newMol->vector.push_back(s);
-    }
-    else{
-        newMol->vector.push_back(activeMolecule->vector[2]);
-        newMol->vector.push_back(activeMolecule->vector[3]);
-    }
-    newMol->vector.insert(newMol->vector.begin(),activeMolecule->vector.begin()+4,activeMolecule->vector.end());
-    result.push_back(newMol);
-    return result;
-}
+// opResult r_minus(const molecule_pointer activeMolecule){
+//     opResult result;
+//     molecule_pointer newMol = std::make_shared<molecule>();
+//     newMol->vector.push_back(activeMolecule->vector[1]);
+//     if (isNumber(*activeMolecule->vector[2]) & isNumber(*activeMolecule->vector[3])){
+//         float one = std::stof(*activeMolecule->vector[2]);
+//         float two = std::stof(*activeMolecule->vector[3]);
+//         float result = one - two;
+//         std::shared_ptr<symbol> s = std::make_shared<symbol>(std::to_string(result));
+//         newMol->vector.push_back(s);
+//     }
+//     else{
+//         newMol->vector.push_back(activeMolecule->vector[2]);
+//         newMol->vector.push_back(activeMolecule->vector[3]);
+//     }
+//     newMol->vector.insert(newMol->vector.begin(),activeMolecule->vector.begin()+4,activeMolecule->vector.end());
+//     result.push_back(newMol);
+//     return result;
+// }
 
-opResult r_mult(const molecule_pointer activeMolecule){
-    opResult result;
-    molecule_pointer newMol = std::make_shared<molecule>();
-    newMol->vector.push_back(activeMolecule->vector[1]);
-    if (isNumber(*activeMolecule->vector[2]) & isNumber(*activeMolecule->vector[3])){
-        float one = std::stof(*activeMolecule->vector[2]);
-        float two = std::stof(*activeMolecule->vector[3]);
-        float result = one * two;
-        std::shared_ptr<symbol> s = std::make_shared<symbol>(std::to_string(result));
-        newMol->vector.push_back(s);
-    }
-    else{
-        newMol->vector.push_back(activeMolecule->vector[2]);
-        newMol->vector.push_back(activeMolecule->vector[3]);
-    }
-    newMol->vector.insert(newMol->vector.begin(),activeMolecule->vector.begin()+4,activeMolecule->vector.end());
-    result.push_back(newMol);
-    return result;
-}
+// opResult r_mult(const molecule_pointer activeMolecule){
+//     opResult result;
+//     molecule_pointer newMol = std::make_shared<molecule>();
+//     newMol->vector.push_back(activeMolecule->vector[1]);
+//     if (isNumber(*activeMolecule->vector[2]) & isNumber(*activeMolecule->vector[3])){
+//         float one = std::stof(*activeMolecule->vector[2]);
+//         float two = std::stof(*activeMolecule->vector[3]);
+//         float result = one * two;
+//         std::shared_ptr<symbol> s = std::make_shared<symbol>(std::to_string(result));
+//         newMol->vector.push_back(s);
+//     }
+//     else{
+//         newMol->vector.push_back(activeMolecule->vector[2]);
+//         newMol->vector.push_back(activeMolecule->vector[3]);
+//     }
+//     newMol->vector.insert(newMol->vector.begin(),activeMolecule->vector.begin()+4,activeMolecule->vector.end());
+//     result.push_back(newMol);
+//     return result;
+// }
 
 
 
@@ -593,7 +592,6 @@ double random_double(){
 
 
 void fraglets::inject(const molecule_pointer mol,int mult){
-    this->reactionCoutTable.inject(mol,1);
     if (mol->vector.empty() or mult < 1){return;}
     if (mol->vector.size()>= 1){
         if (this->isbimol(mol)){
@@ -601,17 +599,20 @@ void fraglets::inject(const molecule_pointer mol,int mult){
                 std::shared_ptr<symbol> key = newMol->vector[1];
                 // could check for invalid fraglets here.
                 this->active.inject(key,newMol,mult);
+                this->reactionCoutTable.insert(molToString(newMol));
                 this->idle = false;
             }
         else if (this->isunimol(mol)){
             const molecule_pointer newMol = this->makeUniqueUnimol(mol);
             this->unimol.inject(newMol,mult);
+            this->reactionCoutTable.insert(molToString(newMol));
             }
         else{
-            const molecule_pointer newMol = this->makeUniqueActive(mol);
+            const molecule_pointer newMol = this->makeUniquePassive(mol);
             std::shared_ptr<symbol> key = newMol->vector[0];
             // could check for invalid fraglets here.
             this->passive.inject(key,newMol,mult);
+            this->reactionCoutTable.insert(molToString(newMol));
             this->idle = false;
         }
     }
@@ -709,6 +710,7 @@ opResult fraglets::react2(const molecule_pointer activeMolecule,const molecule_p
     opResult result;
     bimolOp f = bimolOpMap.find(*tag)->second;
     result = f(activeMolecule,passiveMolecule);
+    
 
 
     if (result.size() == 1){
@@ -736,7 +738,6 @@ int fraglets::run_unimol(){
     while (!this->unimol.multiset.empty()){
         const molecule_pointer mol = this->unimol.expelrnd();
         opResult result = this->react1(mol);
-        const char* const delim = " ";
         if (result.size() == 1){
 
             if (!this->quiet){
@@ -894,14 +895,14 @@ void fraglets::run(int niter,int molCap,bool quite = false){
         }
         
         if (this->idle){
-            // this->drawGraphViz();
+            
             if (!this->quiet){
                 std::cout<< "idle\n";
             }
             return;
         }
     }
-    // this->drawGraphViz();
+
     if (!this->quiet){
         std::cout<< "done\n";
     }
@@ -915,8 +916,10 @@ void fraglets::drawGraphViz(){
     for(auto edge : this->edgeTable){
 
         auto t =edge.first;
-        int reactionCount = this->reactionCoutTable.mult(t)+1/(this->reactionCoutTable.mult()+1)+1;
-
+        float reactionCount = float(this->reactionCoutTable.count(t))/float(this->reactionCoutTable.size())*1000;
+        if (reactionCount < 1){
+            reactionCount = 1;
+        }
         std::string s = std::to_string(reactionCount);
         char  *weight = const_cast<char *>(s.c_str());
         agsafeset(edge.second,"weight",weight,weight);

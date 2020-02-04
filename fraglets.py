@@ -31,6 +31,10 @@ class fraglets():
         cFraglets.parse(self.cfraglets,line)
 
 
+    def drawGraphViz(self):
+        cFraglets.drawGraphViz(self.cfraglets)
+
+
     def __delete__(self):
         cFraglets.delete_object(self.cfraglets)
 

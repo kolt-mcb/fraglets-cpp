@@ -33,6 +33,21 @@ PyObject* parse(PyObject* self, PyObject* args)
     return Py_BuildValue("");
 }
 
+PyObject* drawGraphViz(PyObject* self, PyObject* args)
+{
+
+    PyObject* fragletsCapsule_;
+
+
+    // Process arguments
+    PyArg_ParseTuple(args, "O",
+                     &fragletsCapsule_);
+    fraglets* frag = (fraglets*)PyCapsule_GetPointer(fragletsCapsule_, "fragletsPtr");
+    frag->drawGraphViz();
+
+    // Return nothing
+    return Py_BuildValue("");
+}
 
 
 
@@ -128,6 +143,8 @@ static PyMethodDef fragletsFunctions[] =
     "gets the unimol tags"},
     {"getIter",getIter,METH_VARARGS,
     "gets the current number of iterations"},
+    {"drawGraphViz",drawGraphViz,METH_VARARGS,
+    "draws graph"},
     {"delete_object",               // C++/Py Destructor
       delete_object, METH_VARARGS,
      "Delete `fraglets` object"},
