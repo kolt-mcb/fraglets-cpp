@@ -1,0 +1,39 @@
+# sequential version of sort based on [min] function:
+# take the min, move it to ordered list, take the next min, and so on.
+#
+# [sort ltlist>] --> [sorted ltlist>]
+#
+
+ [sorted]
+ [matchp sort empty finish continue]
+ [matchp continue split remain * getmin]
+
+# "remain" list becomes new list to be sorted, and [min N] is appended to
+# sorted list
+
+ [matchp min split match remain sort * split match sorted match tosorted sorted * tosorted]
+
+# this is the [getmin] function as in the fraglets tutorial, except
+# that now it stores the non-min numbers in the "remain" list
+
+ [matchp getmin length len1]
+ [matchp len1 lt getmin2 min2 1]
+
+ [matchp min2 pop d1]
+ [matchp d1 pop min]
+
+ [matchp getmin2 pop d11]
+ [matchp d11 pop getmin3]
+
+ [matchp getmin3 lt islt nlt]
+ [matchp nlt pop2 r1 getmin]
+ [matchp islt exch nlt]
+
+# store non-min values in "remain" list, to be sorted later
+ [matchp r1 match remain remain]
+
+# test:
+
+ [sort 203 -200 989 -446 -927 962 -485 714 -351 226 -791 55 448 -32 -477 261 529 38 922 -419 822 -395 -757 -951 757 -521 88]
+
+# [pop2 pop2 pop2]

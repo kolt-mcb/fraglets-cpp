@@ -2,19 +2,20 @@
 #include "moleculemultiset.h"
 
 
-typedef std::unordered_map<std::string,moleculeMultiset*>  keyMultisetMap;
+typedef std::unordered_map<symbol,moleculeMultiset*>  keyMultisetMap;
 
 
 class keyMultiset  {
+
     
     public:
         int total = 0;
-        void inject(std::string key, const molecule& mol, int mult=1);
-        void expel(std::string key, const molecule& mol, int mult=1);
-        molecule rndmol(std::string key);
-        molecule expelrnd(std::string key);
-        int mult(const molecule& mol);
-        int multk(std::string key);
+        void inject(std::shared_ptr<symbol> key, const molecule_pointer mol, int mult=1);
+        void expel(symbol key,const molecule_pointer mol, int mult=1);
+        const molecule_pointer rndmol(symbol key);
+        const molecule_pointer expelrnd(symbol key);
+        int mult(molecule_pointer& mol);
+        int multk(symbol key);
         int nspecies();
         keyMultisetMap keyMap;
 
