@@ -12,3 +12,6 @@ Fraglets are tiny computation fragments or tokens that flow through a computer n
 
 What are they good for?
 Fraglets can be used to explore new protocol engineering and implementation opportunities. Inspired by the chemical metaphor, we study for example the regulation of protocol instances as well as their internal code base. Such a system will hopefully be able to track changes in network and code configurations, adapt gracefully to unforseen situations and even evolve its own functionality. On the other hand, Fraglets are formal enough such that we can study self-healing properties of protocol implementations running in unreliable execution environments.
+
+
+![alt text](https://github.com/koltafrickenfer/fraglets-cpp/blob/master/fraglets_map.pdf)
