@@ -1,0 +1,32 @@
+# experimental quicksort implementation
+# [qsort <list>] -> [sorted <list>]
+
+[sorted]
+
+# Entry rule: if the list is empty we're done, otherwise continue
+[matchp qsort empty qs_finish qs_partition]
+
+# Split first element as pivot and the rest of the list
+[matchp qs_partition pop2 pivot qs_part]
+
+# Partition rest into [less] and [greater] lists
+[matchp qs_part empty qs_recur qs_compare]
+[matchp qs_compare pop2 cur qs_part2]
+[matchp qs_part2 lt qs_lt qs_ge pivot cur]
+[matchp qs_lt match less less]
+[matchp qs_ge match greater greater]
+
+# After processing current element, continue partitioning
+[matchp qs_lt match qs_part qs_compare]
+[matchp qs_ge match qs_part qs_compare]
+
+# When done partitioning, recursively sort less and greater
+[matchp qs_recur fork less_sort greater_sort]
+[matchp less_sort match less qsort]
+[matchp greater_sort match greater qsort]
+
+# Merge results: sorted less list, pivot, sorted greater list
+[matchp qs_finish split match less sorted * split match greater sorted * match pivot match sorted match tosorted sorted * tosorted]
+
+# example invocation
+[qsort 5 1 4 2 3]
