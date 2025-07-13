@@ -1,14 +1,19 @@
-from distutils.core import setup, Extension
+from setuptools import setup, Extension
 
-module1 = Extension('cFraglets',
-                    sources = [ 'moleculemultiset.cpp', 'keymultiset.cpp','fragletsToPy.cpp','fraglets.cpp'],
-                    # include_dirs=['.','/usr/include/graphviz/']
-                    extra_link_args=['-lgvc']
-                    )
+module = Extension(
+    'cFraglets',
+    sources=[
+        'moleculemultiset.cpp',
+        'keymultiset.cpp',
+        'fragletsToPy.cpp',
+        'fraglets.cpp',
+    ],
+    extra_link_args=['-lgvc'],
+)
 
-setup (name = 'cFraglets',
-       version = '1.0',
-       description = 'This is a demo package',
-       ext_modules = [module1])
-
-
+setup(
+    name='cFraglets',
+    version='1.0',
+    description='Fraglets C++ extension module',
+    ext_modules=[module],
+)
