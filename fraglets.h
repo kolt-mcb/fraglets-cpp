@@ -6,6 +6,7 @@
 #include <vector> 
 #include <functional>
 #include <graphviz/gvc.h>
+#include <pthread.h>
 
 
 typedef std::map<std::string, double> propMap;
@@ -54,6 +55,7 @@ class fraglets {
         std::set<molecule_pointer> mappedMols;
         int stackplotIndexCounter = 1;
         std::unordered_multiset<symbol> reactionCoutTable;
+        pthread_mutex_t prop_mutex;
         void addNode(symbol mol,const bool& unimol,const bool& matchp,const bool& bimol);
         void addEdge(molecule_pointer activeMolecule,const molecule_pointer passiveMolecule,const bool& unimol,const bool& matchp);
         const molecule_pointer makeUniqueUnimol(const molecule_pointer);
@@ -64,6 +66,7 @@ class fraglets {
         opResult react1(const molecule_pointer mol);
         opResult react2(const molecule_pointer activeMolecule ,const molecule_pointer passiveMolecule);
         void iterate();
+        void iterate_parallel(int nthreads);
         bool inert();
         std::vector<int> activeMultisetSize;
         std::vector<int> passiveMultisetSize;
@@ -71,6 +74,8 @@ class fraglets {
         std::vector<std::vector<int>> StackplotVector;
         void inject(const molecule_pointer mol,int mult=1);
         double propensity();
+        double propensity_parallel(int nthreads);
+        static void* propensity_thread(void* arg);
         int run_unimol();
         bool quiet;
 
@@ -82,6 +87,7 @@ class fraglets {
         bool isMatchp(const molecule_pointer mol);
         bool isunimol(const molecule_pointer mol);
         void run(int niter,int molCap,bool quiet);
+        void run_parallel(int niter,int molCap,int nthreads,bool quiet);
         void parse(std::string line);
         void interpret(std::string filename);
         void trace();

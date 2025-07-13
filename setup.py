@@ -8,7 +8,8 @@ module = Extension(
         'fragletsToPy.cpp',
         'fraglets.cpp',
     ],
-    extra_link_args=['-lgvc'],
+    extra_link_args=['-lgvc', '-pthread'],
+    extra_compile_args=['-pthread'],
 )
 
 setup(
