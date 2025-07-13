@@ -674,28 +674,24 @@ struct PropensityArgs {
     std::vector<symbol>* keys;
     size_t start;
     size_t end;
+    propMap local_prop;
+    double local_wt;
 };
 
 void* fraglets::propensity_thread(void* arg){
     PropensityArgs* args = static_cast<PropensityArgs*>(arg);
-    double local_wt = 0;
-    propMap local_prop;
+    args->local_wt = 0;
+    args->local_prop.clear();
     for(size_t i=args->start;i<args->end;i++){
         symbol key = (*args->keys)[i];
         std::size_t m = args->self->active.multk(key);
         std::size_t p = args->self->passive.multk(key);
         std::size_t w = m*p;
         if(w>0){
-            local_prop[key] = w;
+            args->local_prop[key] = w;
         }
-        local_wt += w;
+        args->local_wt += w;
     }
-    pthread_mutex_lock(&args->self->prop_mutex);
-    for(auto &kv : local_prop){
-        args->self->prop[kv.first] = kv.second;
-    }
-    args->self->wt += local_wt;
-    pthread_mutex_unlock(&args->self->prop_mutex);
     return NULL;
 }
 
@@ -728,6 +724,12 @@ double fraglets::propensity_parallel(int nthreads){
         if(threads[i]){
             pthread_join(threads[i], NULL);
         }
+    }
+    for(int i=0;i<nthreads;i++){
+        for(auto &kv : args[i].local_prop){
+            this->prop[kv.first] = kv.second;
+        }
+        this->wt += args[i].local_wt;
     }
     if (this->wt <= 0){
         this->idle = true;

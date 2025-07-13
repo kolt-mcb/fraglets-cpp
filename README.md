@@ -35,3 +35,16 @@ locally. You can run the included examples directly after the build:
 ```bash
 python3 test.py
 ```
+
+### Benchmarking
+
+To measure how the sort implementation scales with different thread counts, run
+the benchmark script:
+
+```bash
+python3 benchmark_sort.py
+```
+
+The script generates a random list of 100 numbers and times the sorting process
+using 1, 2, 4 and 8 threads. Each run executes roughly 200k iterations of the
+engine to ensure the list is fully sorted, and the elapsed time is printed.
