@@ -15,3 +15,23 @@ Fraglets can be used to explore new protocol engineering and implementation oppo
 
 
 ![alt text](https://github.com/koltafrickenfer/fraglets-cpp/blob/master/sort.png)
+
+## Building
+
+The project ships a small C++ extension exposing the core engine to
+Python. Building simply requires a compiler, Python and the Graphviz
+development libraries.
+
+```bash
+sudo apt-get install build-essential python3-dev libgraphviz-dev
+git clone https://github.com/koltafrickenfer/fraglets-cpp.git
+cd fraglets-cpp
+python3 -m pip install .
+```
+
+This command compiles the extension and installs the `cFraglets` module
+locally. You can run the included examples directly after the build:
+
+```bash
+python3 test.py
+```
