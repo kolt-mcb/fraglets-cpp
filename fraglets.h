@@ -86,6 +86,7 @@ class fraglets {
         void interpret(std::string filename);
         void trace();
         void drawGraphViz();
+        std::vector<std::string> getSorted();
         int iter = 0;
         
 

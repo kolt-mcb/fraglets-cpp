@@ -108,6 +108,31 @@ PyObject* getUnimolTags(PyObject* self, PyObject* args)
     return tags;
 }
 
+PyObject* getSorted(PyObject* self, PyObject* args)
+{
+    PyObject* fragletsCapsule_;
+
+    PyArg_ParseTuple(args, "O",
+                     &fragletsCapsule_);
+
+    fraglets* frag = (fraglets*)PyCapsule_GetPointer(fragletsCapsule_, "fragletsPtr");
+
+    std::vector<std::string> vec = frag->getSorted();
+    PyObject* list = PyList_New(vec.size());
+    for(size_t i=0;i<vec.size();++i){
+        const std::string &sym = vec[i];
+        PyObject* item;
+        try{
+            int v = std::stoi(sym);
+            item = PyLong_FromLong(v);
+        }catch(...){
+            item = Py_BuildValue("s", sym.c_str());
+        }
+        PyList_SetItem(list, i, item);
+    }
+    return list;
+}
+
 
 PyObject* delete_object(PyObject* self, PyObject* args)
 {
@@ -145,6 +170,8 @@ static PyMethodDef fragletsFunctions[] =
     "gets the current number of iterations"},
     {"drawGraphViz",drawGraphViz,METH_VARARGS,
     "draws graph"},
+    {"getSorted",getSorted,METH_VARARGS,
+    "returns sorted list"},
     {"delete_object",               // C++/Py Destructor
       delete_object, METH_VARARGS,
      "Delete `fraglets` object"},
