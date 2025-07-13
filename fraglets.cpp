@@ -942,6 +942,27 @@ void fraglets::drawGraphViz(){
     gvFreeContext(graphContext);
 }
 
+std::vector<std::string> fraglets::getSorted(){
+    std::vector<std::string> result;
+    auto extract = [&result](keyMultisetMap &km){
+        for(auto &kv : km){
+            moleculeMultiset *mset = kv.second;
+            for(auto mol : mset->multiset){
+                if(!mol->vector.empty() && *(mol->vector[0]) == "sorted"){
+                    for(size_t i=1;i<mol->vector.size();++i){
+                        result.push_back(*(mol->vector[i]));
+                    }
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+    if(extract(this->active.keyMap)) return result;
+    extract(this->passive.keyMap);
+    return result;
+}
+
 
 
 

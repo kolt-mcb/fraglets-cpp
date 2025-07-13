@@ -34,6 +34,9 @@ class fraglets():
     def drawGraphViz(self):
         cFraglets.drawGraphViz(self.cfraglets)
 
+    def get_sorted(self):
+        return cFraglets.getSorted(self.cfraglets)
+
 
     def __delete__(self):
         cFraglets.delete_object(self.cfraglets)
