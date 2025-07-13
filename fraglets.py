@@ -27,6 +27,10 @@ class fraglets():
         cFraglets.run(self.cfraglets,iter,size,quiet)
         self.iter = cFraglets.getIter(self.cfraglets)
 
+    def run_threads(self, iter, size, threads, quiet=False):
+        cFraglets.run_threads(self.cfraglets, iter, size, threads, quiet)
+        self.iter = cFraglets.getIter(self.cfraglets)
+
     def parse(self, line):
         cFraglets.parse(self.cfraglets,line)
 
