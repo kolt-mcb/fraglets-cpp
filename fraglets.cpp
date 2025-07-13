@@ -7,6 +7,7 @@
 #include <string>
 #include <iterator>
 #include <cstring>
+#include <pthread.h>
 
 
 
@@ -668,6 +669,72 @@ double fraglets::propensity(){
 
 }
 
+struct PropensityArgs {
+    fraglets* self;
+    std::vector<symbol>* keys;
+    size_t start;
+    size_t end;
+};
+
+void* fraglets::propensity_thread(void* arg){
+    PropensityArgs* args = static_cast<PropensityArgs*>(arg);
+    double local_wt = 0;
+    propMap local_prop;
+    for(size_t i=args->start;i<args->end;i++){
+        symbol key = (*args->keys)[i];
+        std::size_t m = args->self->active.multk(key);
+        std::size_t p = args->self->passive.multk(key);
+        std::size_t w = m*p;
+        if(w>0){
+            local_prop[key] = w;
+        }
+        local_wt += w;
+    }
+    pthread_mutex_lock(&args->self->prop_mutex);
+    for(auto &kv : local_prop){
+        args->self->prop[kv.first] = kv.second;
+    }
+    args->self->wt += local_wt;
+    pthread_mutex_unlock(&args->self->prop_mutex);
+    return NULL;
+}
+
+double fraglets::propensity_parallel(int nthreads){
+    this->run_unimol();
+    this->prop.clear();
+    this->wt = 0;
+    std::vector<symbol> keys;
+    keys.reserve(this->active.keyMap.size());
+    for(auto &kv : this->active.keyMap){
+        keys.push_back(kv.first);
+    }
+    if(nthreads < 1) nthreads = 1;
+    if(nthreads > (int)keys.size()) nthreads = keys.size();
+    std::vector<pthread_t> threads(nthreads);
+    std::vector<PropensityArgs> args(nthreads);
+    size_t chunk = (keys.size() + nthreads - 1)/nthreads;
+    for(int i=0;i<nthreads;i++){
+        args[i].self = this;
+        args[i].keys = &keys;
+        args[i].start = i*chunk;
+        args[i].end = std::min(args[i].start + chunk, keys.size());
+        if(args[i].start >= args[i].end){
+            threads[i] = 0;
+            continue;
+        }
+        pthread_create(&threads[i], NULL, propensity_thread, &args[i]);
+    }
+    for(int i=0;i<nthreads;i++){
+        if(threads[i]){
+            pthread_join(threads[i], NULL);
+        }
+    }
+    if (this->wt <= 0){
+        this->idle = true;
+    }
+    return this->wt;
+}
+
 void fraglets::react(double w){
         // """ perform the selected reaction pointed to by the dice position w
         //     (typically involked from the hierarchical Gillespie SSA
@@ -786,79 +853,34 @@ void fraglets::iterate(){
 
 }
 
+void fraglets::iterate_parallel(int nthreads){
+    this->propensity_parallel(nthreads);
+    if (!this->idle){
+        this->run_bimol();
+    }
+    this->activeMultisetSize.push_back(this->active.total);
+    this->passiveMultisetSize.push_back(this->passive.total);
+}
 
-void fraglets::run(int niter,int molCap,bool quite = false){
+
+void fraglets::run(int niter,int molCap,bool quite){
+    this->run_parallel(niter,molCap,4,quite);
+}
+
+
+
+
+
+void fraglets::run_parallel(int niter,int molCap,int nthreads,bool quite){
+    pthread_mutex_init(&this->prop_mutex,NULL);
     this->quiet = quite;
     for (int i = 1;i<niter;i++){
-        // this->trace();
         if (!this->quiet){
             std::cout<< "ITER= "<<i<<'\n';
         }
-        this->iterate();
+        this->iterate_parallel(nthreads);
         this->iter++;
         int total = this->active.total + this->passive.total;
-
-
-
-
-        std::map<molecule_pointer,int> molCountMap;
-
-
-        // for (auto activeKey :this->active.keyMap){
-        //     moleculeMultiset mset = *activeKey.second;
-        //     for (auto mol : mset.multiset){
-        //         int mult = mset.mult(mol);
-        //         auto mapMolIt = this->mappedMols.find(mol);
-        //         if (mapMolIt == this->mappedMols.end()){
-        //             this->stackplotIndexMap[this->stackplotIndexCounter] = mol;
-        //             this->mappedMols.insert(mol);
-        //             this->stackplotIndexCounter += 1;
-        //         }
-        //         molCountMap[mol] = mult;
-        //     }
-        // }
-        // for (auto passiveKey :this->passive.keyMap){
-        //     moleculeMultiset mset = *passiveKey.second;
-        //     for (auto mol : mset.multiset){
-        //         int mult = mset.mult(mol);
-        //         auto mapMolIt = this->mappedMols.find(mol);
-        //         if (mapMolIt == this->mappedMols.end()){
-        //             this->stackplotIndexMap[this->stackplotIndexCounter] = mol;
-        //             this->mappedMols.insert(mol);
-        //             this->stackplotIndexCounter += 1;
-        //         }
-        //         molCountMap[mol] = mult;
-        //     }
-        // }
-        // for (auto unimol :this->unimol.multiset){
-        //     int mult = this->unimol.mult(unimol);
-        //     auto mapMolIt = this->mappedMols.find(unimol);
-        //     if (mapMolIt == this->mappedMols.end()){
-        //         this->stackplotIndexMap[this->stackplotIndexCounter] = unimol;
-        //         this->mappedMols.insert(unimol);
-        //         this->stackplotIndexCounter += 1;
-        //     }
-        //     molCountMap[unimol] = mult;
-
-        // }
-
-
-        // while (this->stackplotIndexCounter > this->StackplotVector.size()){
-        //     std::vector<int> molvec;
-        //     this->StackplotVector.push_back(molvec);
-        // }
-        // for(auto mappedMol : stackplotIndexMap){
-        //     molecule_pointer mol = mappedMol.second;
-        //     int mult = molCountMap[mol];
-        //     this->StackplotVector[mappedMol.first].push_back(mult);
-        // }
-        // for (auto vIt : this->StackplotVector){
-        //     while (vIt.size() < this->stackplotIndexCounter ){
-        //         vIt.push_back(0);
-        //     }
-        // }
-
-
         while (total > molCap){
             int n = rand() % 2;
             if (n){
@@ -875,37 +897,22 @@ void fraglets::run(int niter,int molCap,bool quite = false){
                     this->passive.expelrnd(random_it->first);
                 }
                 total = this->active.total + this->passive.total;
-
                 this->prop.clear();
                 this->wt = 0;
-                keyMultisetMap::iterator it = this->active.keyMap.begin();
-                for (;it != this->active.keyMap.end();it++){
-                    symbol key = it->first;
-                    std::size_t m = this->active.multk(key);
-                    std::size_t p = this->passive.multk(key);
-                    std::size_t w = m*p;
-                    // std::cout << key << m << p << '\n';
-                    if (w > 0){
-                        this->prop[key] = w;
-                    }
-                    this->wt += w;
-                }
-                if (this->wt <= 0){
-                    this->idle = true;}
+                this->propensity_parallel(nthreads);
         }
-        
         if (this->idle){
-            
             if (!this->quiet){
                 std::cout<< "idle\n";
             }
+            pthread_mutex_destroy(&this->prop_mutex);
             return;
         }
     }
-
     if (!this->quiet){
         std::cout<< "done\n";
     }
+    pthread_mutex_destroy(&this->prop_mutex);
     return;
 }
 
