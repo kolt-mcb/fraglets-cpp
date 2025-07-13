@@ -48,3 +48,27 @@ python3 benchmark_sort.py
 The script generates a random list of 100 numbers and times the sorting process
 using 1, 2, 4 and 8 threads. Each run executes roughly 200k iterations of the
 engine to ensure the list is fully sorted, and the elapsed time is printed.
+
+### Experimental QuickSort
+
+The repository also includes an experimental quicksort program written in
+Fraglets. The rules are defined in `quicksort.fra` and illustrate how to
+implement a recursive algorithm using the instruction set. You can run it
+similar to the selection sort example by parsing the file and executing the
+engine:
+
+```bash
+python3 - <<'EOF'
+import fraglets
+f = fraglets.fraglets()
+for line in open('quicksort.fra'):
+    line = line.strip()
+    if line and not line.startswith('#'):
+        f.parse(line)
+f.run(20000, 10000, True)
+print('sorted:', f.get_sorted())
+EOF
+```
+
+This implementation is not fully optimised but demonstrates a different
+approach to sorting with fraglets.
