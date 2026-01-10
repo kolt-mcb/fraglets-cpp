@@ -5,6 +5,8 @@
 #include <iostream>
 #include <random>
 #include <memory>
+#include <mutex>
+#include <atomic>
 
 
 
@@ -85,5 +87,6 @@ class moleculeMultiset {
         int mult(molecule_pointer& mol);
         int mult();
         unorderedMultiset multiset;
+        mutable std::mutex mtx;  // Mutex for thread-safe operations
 
 };

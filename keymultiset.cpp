@@ -4,40 +4,49 @@
 
 void keyMultiset::inject(std::shared_ptr<symbol> key,const molecule_pointer  mol, int mult){
     if ((key->empty()) or (mol->vector.empty())){return;}
-    keyMultisetMap::iterator it = this->keyMap.find(*key);
+
     moleculeMultiset* mset;
-    if (it == this->keyMap.end()){
-        mset = new moleculeMultiset();
-        this->keyMap[*key] = mset;
-    }else{
-        mset = it->second;
-    }    
+    {
+        std::lock_guard<std::mutex> lock(mtx);
+        keyMultisetMap::iterator it = this->keyMap.find(*key);
+        if (it == this->keyMap.end()){
+            mset = new moleculeMultiset();
+            this->keyMap[*key] = mset;
+        }else{
+            mset = it->second;
+        }
+    }
 
     mset->inject(mol,mult);
-    this->total += mult;
+    this->total.fetch_add(mult);
 }
 
 void keyMultiset::expel(symbol key,const molecule_pointer mol, int mult){
     if ((key.empty()) or (mult < 0)){ return;}
     else{
-        keyMultisetMap::iterator it = this->keyMap.find(key);
-        if (it != this->keyMap.end()){
-            moleculeMultiset* mset =  it->second;
-            int total = mset->expel(mol,mult);
-            this->total -= total;
+        moleculeMultiset* mset;
+        {
+            std::lock_guard<std::mutex> lock(mtx);
+            keyMultisetMap::iterator it = this->keyMap.find(key);
+            if (it != this->keyMap.end()){
+                mset =  it->second;
+            }
+            else{
+                std::cout<< "error expel\n";
+                exit(0);
+            }
         }
-        else{
-            std::cout<< "error expel\n";
-            exit(0);
-        }
+        int expelled = mset->expel(mol,mult);
+        this->total.fetch_sub(expelled);
     }
 }
 
 const molecule_pointer keyMultiset::rndmol(symbol key){
+    std::lock_guard<std::mutex> lock(mtx);
     keyMultisetMap::iterator it = this->keyMap.find(key);
     // if (it != this->keyMap.end()){
-        moleculeMultiset mset = *it->second;
-        const molecule_pointer mol = mset.rndMol();
+        moleculeMultiset* mset = it->second;
+        const molecule_pointer mol = mset->rndMol();
         return mol;
     // }
 }
@@ -54,16 +63,17 @@ const molecule_pointer keyMultiset::expelrnd(symbol key){
 int keyMultiset::multk(symbol key){
     // moleculeMultiset m = *this->keyMap[key];
     // std::cout << key << " while\n" ;
+    std::lock_guard<std::mutex> lock(mtx);
     keyMultisetMap::iterator it = this->keyMap.find(key);
     if (it!=this->keyMap.end()){
-        moleculeMultiset mset =  *it->second;
-        return mset.mult();
+        moleculeMultiset* mset =  it->second;
+        return mset->mult();
     }else
-    {   
+    {
         return 0;
     }
     // return m.mult();
-    
+
 };
 int nspecies();
 

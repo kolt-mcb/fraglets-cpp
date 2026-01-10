@@ -73,6 +73,7 @@ symbol molToString(const molecule_pointer mol){
 
 
 const molecule_pointer fraglets::makeUniqueUnimol(const molecule_pointer mol){
+    std::lock_guard<std::mutex> lock(map_mutex);
     moleculeMap::iterator it = this->unimolMap.find(*mol);
     if (it != this->unimolMap.end()){
         return it->second;
@@ -83,6 +84,7 @@ const molecule_pointer fraglets::makeUniqueUnimol(const molecule_pointer mol){
 }
 
 const molecule_pointer fraglets::makeUniqueActive(const molecule_pointer mol){
+    std::lock_guard<std::mutex> lock(map_mutex);
     moleculeMap::iterator it = this->activeMap.find(*mol);
     if (it != this->activeMap.end()){
         return it->second;
@@ -93,6 +95,7 @@ const molecule_pointer fraglets::makeUniqueActive(const molecule_pointer mol){
 }
 
 const molecule_pointer fraglets::makeUniquePassive(const molecule_pointer mol){
+    std::lock_guard<std::mutex> lock(map_mutex);
     moleculeMap::iterator it = this->passiveMap.find(*mol);
     if (it != this->passiveMap.end()){
         return it->second;
@@ -104,8 +107,9 @@ const molecule_pointer fraglets::makeUniquePassive(const molecule_pointer mol){
 
 
 void fraglets::addNode(symbol mol,const bool& unimol,const bool& matchp,const bool& bimol){
+    // Caller must hold graph_mutex
     // auto c_mol = mol.c_str();//new char[_mol.size() + 1];
-    
+
     char *c_mol = &mol[0];
     //_mol.copy(c_mol,_mol.size(),_mol.front());
     // std::transform(mol->vector.begin(),mol->vector.end(),std::back_inserter(c_mol),convert);
@@ -130,10 +134,11 @@ void fraglets::addNode(symbol mol,const bool& unimol,const bool& matchp,const bo
 }
 
 void fraglets::addEdge(const molecule_pointer mol,const molecule_pointer resultMol,const bool& unimol,const bool& matchp){
+    std::lock_guard<std::mutex> lock(graph_mutex);
     std::string molString = molToString(mol);
 
     std::string resultMolString =  molToString(resultMol);
-  
+
 
     if (this->nodesTable.find(molString) == this->nodesTable.end()){
         this->addNode(molString,this->isunimol(mol),this->isperm(mol),this->isbimol(mol));
@@ -647,7 +652,13 @@ bool fraglets::isunimol(const molecule_pointer mol){
 }
 
 double fraglets::propensity(){
-    this->run_unimol();
+    if (enable_parallel && num_threads > 1) {
+        this->run_unimol_parallel(num_threads);
+    } else {
+        this->run_unimol();
+    }
+
+    std::lock_guard<std::mutex> lock(prop_mutex);
     this->prop.clear();
     this->wt = 0;
     keyMultisetMap::iterator it = this->active.keyMap.begin();
@@ -758,6 +769,62 @@ int fraglets::run_unimol(){
     return n;
 }
 
+int fraglets::run_unimol_parallel(unsigned int num_threads){
+    std::atomic<int> n{0};
+    std::vector<std::thread> threads;
+
+    // Worker function for each thread
+    auto worker = [this, &n]() {
+        while (true) {
+            // Try to get a molecule to process
+            molecule_pointer mol;
+            {
+                std::lock_guard<std::mutex> lock(this->unimol.mtx);
+                if (this->unimol.multiset.empty()) {
+                    break;
+                }
+                auto it = this->unimol.multiset.begin();
+                mol = *it;
+                this->unimol.multiset.erase(it);
+            }
+
+            // Process the molecule (react1 is read-only on mol)
+            opResult result = this->react1(mol);
+
+            // Handle results
+            if (result.size() == 1){
+                if (!this->quiet){
+                    std::cout << "[ " << molToString(mol) << "]  --> \n[ " << molToString(result[0]) << "]\n" ;
+                }
+                this->addEdge(mol,result[0],true,false);
+            }
+            if (result.size() == 2){
+                if (!this->quiet){
+                    std::cout << "[ " << molToString(mol) << "]  --> \n[ " << molToString(result[0]) << "] ,  [ " <<  molToString(result[1]) << "]\n" ;
+                }
+                this->addEdge(mol,result[0],true,false);
+                this->addEdge(mol,result[1],true,false);
+            }
+
+            // Inject results (inject is already thread-safe)
+            this->inject_list(result);
+            n.fetch_add(1);
+        }
+    };
+
+    // Launch worker threads
+    for (unsigned int i = 0; i < num_threads; ++i) {
+        threads.emplace_back(worker);
+    }
+
+    // Wait for all threads to complete
+    for (auto& thread : threads) {
+        thread.join();
+    }
+
+    return n.load();
+}
+
 
 void fraglets::run_bimol(){
     if (this->wt <= 0){return;}
@@ -788,7 +855,18 @@ void fraglets::iterate(){
 
 
 void fraglets::run(int niter,int molCap,bool quite = false){
+    this->run(niter, molCap, quite, this->enable_parallel, this->num_threads);
+}
+
+void fraglets::run(int niter,int molCap,bool quite,bool parallel,unsigned int threads){
     this->quiet = quite;
+    this->enable_parallel = parallel;
+    this->num_threads = threads;
+
+    if (!this->quiet && parallel){
+        std::cout << "Running with " << threads << " threads\n";
+    }
+
     for (int i = 1;i<niter;i++){
         // this->trace();
         if (!this->quiet){
@@ -1019,6 +1097,17 @@ void fraglets::trace(){
         }
     }
     std::cout << "================================\n";
+}
+
+void fraglets::setNumThreads(unsigned int threads){
+    if (threads == 0) {
+        threads = 1;
+    }
+    this->num_threads = threads;
+}
+
+void fraglets::setParallel(bool enable){
+    this->enable_parallel = enable;
 }
 
 

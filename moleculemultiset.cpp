@@ -21,12 +21,13 @@ moleculeMultiset::moleculeMultiset(){}
 moleculeMultiset::~moleculeMultiset(){}
 
 void moleculeMultiset::inject(molecule_pointer mol,int mult = 1){
+    std::lock_guard<std::mutex> lock(mtx);
     for (int i = 0; i< mult; i++){
         this->multiset.insert(mol);
     }
 }
 int moleculeMultiset::expel(const molecule_pointer mol, int mult = 1){
-
+    std::lock_guard<std::mutex> lock(mtx);
     int total = 0;
     unorderedMultiset::iterator it;
     for (int i = 0; i < mult; i++){
@@ -48,8 +49,8 @@ int moleculeMultiset::expel(const molecule_pointer mol, int mult = 1){
 
 // https://stackoverflow.com/questions/27024269/select-random-element-in-an-unordered-map
 const molecule_pointer moleculeMultiset::rndMol(){
+    std::lock_guard<std::mutex> lock(mtx);
 
-    
     if (this->multiset.empty()){
         // I know this is fucked but what do I do.
         molecule_pointer mol = std::make_shared<molecule>();
@@ -103,6 +104,7 @@ const molecule_pointer moleculeMultiset::expelrnd(){
 
 
 int moleculeMultiset::mult(molecule_pointer& mol){
+    std::lock_guard<std::mutex> lock(mtx);
     if (mol->vector.empty()){
         return this->multiset.size();
     }
@@ -112,6 +114,7 @@ int moleculeMultiset::mult(molecule_pointer& mol){
 }
 
 int moleculeMultiset::mult(){
+    std::lock_guard<std::mutex> lock(mtx);
     return this->multiset.size();
 
 }
