@@ -41,6 +41,8 @@ extern std::string length;
 extern std::string lt;
 extern std::string pop2;
 extern std::string copy;
+extern std::string partition;
+extern std::string merge;
 
 
 extern std::unordered_set<std::string> bimolTags;

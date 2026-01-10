@@ -1,0 +1,83 @@
+# =============================================================================
+# PARALLEL SORT FOR FRAGLETS
+# Uses partition and merge operations for efficient multi-threading
+# =============================================================================
+#
+# The key to parallelism: [partition N tag ...] creates N independent molecules
+# that can be processed by different threads simultaneously!
+#
+# Algorithm:
+# 1. Partition list into N chunks -> creates N [sortchunk id elements...] molecules
+# 2. Each chunk sorts independently (IN PARALLEL across threads)
+# 3. Merge sorted chunks hierarchically (also parallelizable)
+
+# =============================================================================
+# ENTRY POINT: Start parallel sort
+# =============================================================================
+
+# [parsort N1 N2 N3 ...] - Partition into 4 chunks for parallel processing
+[matchp parsort partition 4 sortchunk]
+
+# =============================================================================
+# INDEPENDENT CHUNK SORTING - RUNS IN PARALLEL!
+# Each [sortchunk id ...] processes independently on different threads
+# =============================================================================
+
+# Extract chunk ID and sort the elements
+[matchp sortchunk pop initsort]
+
+# Initialize: empty sorted list, elements to sort
+[matchp initsort split getsorted * getun sorted]
+[matchp getsorted match getmin]
+[matchp getmin match unsorted extractmin]
+
+# Extract minimum from remaining elements (simple bubble sort for small chunks)
+[matchp extractmin copy check]
+[matchp check length chklen]
+[matchp chklen lt addmin moreelems 2]
+
+# Only one element - add to sorted and done
+[matchp addmin pop2 check match sorted done]
+
+# Multiple elements - find min
+[matchp moreelems pop2 check split first * rest]
+[matchp first match rest match unsorted compareall]
+
+# Compare to find minimum
+[matchp compareall split a * b]
+[matchp a match b match unsorted docompare]
+[matchp docompare lt asmaller bsmaller]
+
+# a is smaller - keep as current min
+[matchp asmaller match unsorted split minval * remaining]
+[matchp minval match remaining match sorted continuesort]
+
+# b is smaller - swap
+[matchp bsmaller exch match unsorted split minval * remaining]
+
+# Continue sorting
+[matchp continuesort dup getsorted]
+
+# Done with this chunk - ready to merge
+[matchp done pop getmin match mergewait]
+
+# =============================================================================
+# MERGING PHASE - Also parallelizable!
+# =============================================================================
+
+# Wait for two sorted chunks to merge
+[matchp mergewait match mergewait beginmerge]
+[matchp beginmerge split list1 * list2]
+
+# Merge using the merge operation with * separator
+[matchp list1 match list2 mergethem]
+[matchp mergethem match merge sendmerged]
+[matchp sendmerged pop mergewait]
+
+# =============================================================================
+# TEST CASES
+# =============================================================================
+
+# Test: 16 numbers - 4-way partition = 4 independent sorting tasks!
+[parsort 45 12 78 23 91 34 56 67 89 11 43 29 15 72 38 54]
+

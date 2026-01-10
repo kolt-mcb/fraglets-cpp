@@ -35,10 +35,12 @@ symbol divide2= "//";
 symbol _exp    = "^";
 symbol _sqrt   = "sqrt";
 symbol _abs    = "abs";
+symbol partition = "partition";
+symbol merge   = "merge";
 
 
 std::unordered_set<std::string> bimolTags = {match,matchp,perm};
-std::unordered_set<std::string> unimolTags = {exch,pop,nop,split,nul,length,_dup,_fork,empty,pop2,copy,lt};
+std::unordered_set<std::string> unimolTags = {exch,pop,nop,split,nul,length,_dup,_fork,empty,pop2,copy,lt,partition,merge};
 
 
 
@@ -355,6 +357,132 @@ opResult r_fork(const molecule_pointer mol){
 
     return result;
 }
+
+// Partition: [partition N tag A B C D E F ...] -> creates N molecules with tag
+// Divides remaining elements roughly equally among N molecules
+// Example: [partition 3 sortchunk 1 2 3 4 5 6 7 8 9]
+//   -> [sortchunk 0 1 2 3] [sortchunk 1 4 5 6] [sortchunk 2 7 8 9]
+opResult r_partition(const molecule_pointer mol){
+    opResult result;
+
+    // Need at least: [partition N tag ...]
+    if (mol->vector.size() < 3) return result;
+
+    // Extract N and tag
+    std::string n_str = *mol->vector[1];
+    if (!isNumber(n_str)) return result;
+
+    int n_partitions = std::stoi(n_str);
+    if (n_partitions <= 0) return result;
+
+    std::shared_ptr<symbol> tag = mol->vector[2];
+
+    // Get elements to partition (everything after tag)
+    std::vector<std::shared_ptr<symbol>> elements;
+    for (size_t i = 3; i < mol->vector.size(); i++) {
+        elements.push_back(mol->vector[i]);
+    }
+
+    int total_elements = elements.size();
+    int base_size = total_elements / n_partitions;
+    int remainder = total_elements % n_partitions;
+
+    int idx = 0;
+    for (int p = 0; p < n_partitions && idx < total_elements; p++) {
+        molecule_pointer partition_mol = std::make_shared<molecule>();
+        partition_mol->vector.push_back(tag);
+
+        // Add partition id
+        std::shared_ptr<symbol> id = std::make_shared<symbol>(std::to_string(p));
+        partition_mol->vector.push_back(id);
+
+        // Determine size of this partition
+        int partition_size = base_size + (p < remainder ? 1 : 0);
+
+        // Add elements to this partition
+        for (int i = 0; i < partition_size && idx < total_elements; i++, idx++) {
+            partition_mol->vector.push_back(elements[idx]);
+        }
+
+        result.push_back(partition_mol);
+    }
+
+    return result;
+}
+
+// Merge: [merge A1 A2 ... * B1 B2 ...] -> [merged sorted list]
+// Merges two sorted lists separated by *
+// Assumes both sublists are sorted in ascending order
+opResult r_merge(const molecule_pointer mol){
+    opResult result;
+
+    // Find the * separator
+    int star_pos = -1;
+    for (size_t i = 1; i < mol->vector.size(); i++) {
+        if (*mol->vector[i] == "*") {
+            star_pos = i;
+            break;
+        }
+    }
+
+    if (star_pos == -1 || star_pos == 1 || star_pos == (int)mol->vector.size() - 1) {
+        // No separator or empty list on one side - just return non-* elements
+        molecule_pointer newMol = std::make_shared<molecule>();
+        for (size_t i = 1; i < mol->vector.size(); i++) {
+            if (*mol->vector[i] != "*") {
+                newMol->vector.push_back(mol->vector[i]);
+            }
+        }
+        result.push_back(newMol);
+        return result;
+    }
+
+    // Extract two lists
+    std::vector<std::shared_ptr<symbol>> list1, list2;
+    for (int i = 1; i < star_pos; i++) {
+        list1.push_back(mol->vector[i]);
+    }
+    for (size_t i = star_pos + 1; i < mol->vector.size(); i++) {
+        list2.push_back(mol->vector[i]);
+    }
+
+    // Merge two sorted lists
+    std::vector<std::shared_ptr<symbol>> merged;
+    size_t i = 0, j = 0;
+
+    while (i < list1.size() && j < list2.size()) {
+        // Compare elements (try numeric comparison first)
+        bool take_first = false;
+        if (isNumber(*list1[i]) && isNumber(*list2[j])) {
+            double val1 = std::stod(*list1[i]);
+            double val2 = std::stod(*list2[j]);
+            take_first = (val1 <= val2);
+        } else {
+            // Lexicographic comparison
+            take_first = (*list1[i] <= *list2[j]);
+        }
+
+        if (take_first) {
+            merged.push_back(list1[i++]);
+        } else {
+            merged.push_back(list2[j++]);
+        }
+    }
+
+    // Add remaining elements
+    while (i < list1.size()) merged.push_back(list1[i++]);
+    while (j < list2.size()) merged.push_back(list2[j++]);
+
+    // Create result molecule
+    molecule_pointer result_mol = std::make_shared<molecule>();
+    for (auto& elem : merged) {
+        result_mol->vector.push_back(elem);
+    }
+
+    result.push_back(result_mol);
+    return result;
+}
+
 opResult r_dup(const molecule_pointer mol){
     opResult result;
     if (mol->vector.size()<2){return result;}
@@ -580,7 +708,9 @@ std::unordered_map<std::string,unimolOp> const unimolOpMap = {{_dup,r_dup},
                                                       {lt,r_lessthan},
                                                       {pop,r_pop},
                                                       {pop2, r_pop2},
-                                                      {copy,r_copy}
+                                                      {copy,r_copy},
+                                                      {partition,r_partition},
+                                                      {merge,r_merge}
                                                     };
 
 
