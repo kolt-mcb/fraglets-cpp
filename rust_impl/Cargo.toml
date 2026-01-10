@@ -22,3 +22,7 @@ path = "src/heavy_benchmark.rs"
 [[bin]]
 name = "massive"
 path = "src/massive_benchmark.rs"
+
+[[bin]]
+name = "fraglets"
+path = "src/bin/fraglets.rs"
