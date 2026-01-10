@@ -15,6 +15,11 @@
 *.exe
 *.out
 fraglets
+fraglets_benchmark
+fraglets_simple
+test_mt
+test_single
+test_sort
 
 # Qt-specific
 moc_*.cpp
