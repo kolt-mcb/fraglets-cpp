@@ -20,6 +20,7 @@ fraglets_simple
 test_mt
 test_single
 test_sort
+benchmark_large
 
 # Qt-specific
 moc_*.cpp
