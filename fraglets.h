@@ -5,7 +5,12 @@
 #include <map>
 #include <vector>
 #include <functional>
+// Use stub header for graphviz when library is not available
+#ifdef HAVE_GRAPHVIZ
 #include <graphviz/gvc.h>
+#else
+#include "graphviz_stub.h"
+#endif
 #include <thread>
 #include <mutex>
 #include <atomic>

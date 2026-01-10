@@ -134,6 +134,11 @@ void fraglets::addNode(symbol mol,const bool& unimol,const bool& matchp,const bo
 }
 
 void fraglets::addEdge(const molecule_pointer mol,const molecule_pointer resultMol,const bool& unimol,const bool& matchp){
+    // Skip graphviz operations if graph is not initialized
+    if (this->graph == nullptr) {
+        return;
+    }
+
     std::lock_guard<std::mutex> lock(graph_mutex);
     std::string molString = molToString(mol);
 
@@ -772,20 +777,28 @@ int fraglets::run_unimol(){
 int fraglets::run_unimol_parallel(unsigned int num_threads){
     std::atomic<int> n{0};
     std::vector<std::thread> threads;
+    threads.reserve(num_threads);
 
     // Worker function for each thread
     auto worker = [this, &n]() {
         while (true) {
             // Try to get a molecule to process
-            molecule_pointer mol;
+            molecule_pointer mol = nullptr;
             {
                 std::lock_guard<std::mutex> lock(this->unimol.mtx);
                 if (this->unimol.multiset.empty()) {
                     break;
                 }
                 auto it = this->unimol.multiset.begin();
+                if (it == this->unimol.multiset.end()) {
+                    break;
+                }
                 mol = *it;
                 this->unimol.multiset.erase(it);
+            }
+
+            if (mol == nullptr) {
+                break;
             }
 
             // Process the molecule (react1 is read-only on mol)
@@ -819,7 +832,9 @@ int fraglets::run_unimol_parallel(unsigned int num_threads){
 
     // Wait for all threads to complete
     for (auto& thread : threads) {
-        thread.join();
+        if (thread.joinable()) {
+            thread.join();
+        }
     }
 
     return n.load();
@@ -1082,17 +1097,17 @@ void fraglets::trace(){
     std::cout << "================================\n";
     keyMultisetMap::iterator ait = this->active.keyMap.begin();
     for (;ait!=this->active.keyMap.end();ait++){
-        moleculeMultiset amset = *ait->second;
-        unorderedMultiset::iterator amit = amset.multiset.begin();
-        for(;amit!=amset.multiset.end();amit++){
+        moleculeMultiset* amset = ait->second;
+        unorderedMultiset::iterator amit = amset->multiset.begin();
+        for(;amit!=amset->multiset.end();amit++){
             // std::cout << *amit << '\n';
         }
     }
     keyMultisetMap::iterator pit = this->passive.keyMap.begin();
     for (;pit!=this->passive.keyMap.end();pit++){
-        moleculeMultiset pmset = *pit->second;
-        unorderedMultiset::iterator pmit = pmset.multiset.begin();
-        for(;pmit!=pmset.multiset.end();pmit++){
+        moleculeMultiset* pmset = pit->second;
+        unorderedMultiset::iterator pmit = pmset->multiset.begin();
+        for(;pmit!=pmset->multiset.end();pmit++){
             // std::cout << *pmit << '\n';
         }
     }

@@ -3,56 +3,14 @@
 #include <iostream>
 #include <iomanip>
 
-// std::string alphabet = {"abcdefghijklmnopqrstuvwxyz"};
-
 std::string alphabet = {"abcdtuvxz"};
 
-void setup_fraglets(fraglets& frag) {
-    symbol mol = "fork nop z match z split match z fork fork fork nop z * split match z fork fork fork nop z * copy z";
-    frag.parse(mol);
-
-    for (int i = 0; i< 100; i++){  // Increased to create more work
-        frag.parse(mol);
-        frag.parse("z");
-    }
-
-    symbol mol2 = "perm z ";
-    std::string::iterator alphaIt2;
-    std::unordered_set<std::string>::iterator uIt;
-
-    for (alphaIt2 = alphabet.begin();alphaIt2!=alphabet.end();alphaIt2++){
-        symbol newMol = mol2 + *alphaIt2;
-        frag.parse(newMol);
-        newMol = mol2 + " z " + *alphaIt2;
-        frag.parse(newMol);
-    }
-
-    for (uIt = unimolTags.begin();uIt!=unimolTags.end();uIt++){
-        symbol newMolTag = mol2  + *uIt;
-        frag.parse(newMolTag);
-        newMolTag = mol2 + " z " +*uIt;
-        frag.parse(newMolTag);
-    }
-
-    for (alphaIt2 = alphabet.begin();alphaIt2!=alphabet.end();alphaIt2++){
-        symbol newMol2 = mol2 + " match " + *alphaIt2;
-        frag.parse(newMol2);
-        newMol2 = mol2 + " z " + "match " + *alphaIt2;
-        frag.parse(newMol2);
-
-        symbol newMol3 = mol2 + " matchp " + *alphaIt2;
-        frag.parse(newMol3);
-        newMol3 = mol2 + " z " + "matchp " + *alphaIt2;
-        frag.parse(newMol3);
-    }
-}
-
 int main(int argc, char *argv[]) {
-    const int iterations = 5000;  // Increased for better parallelization
-    const int molCap = 200;
+    const int iterations = 50000;
+    const int molCap = 1000;
 
     std::cout << "========================================" << std::endl;
-    std::cout << "Multi-Threading Performance Benchmark" << std::endl;
+    std::cout << "Multi-Threading Benchmark (sort.fra)" << std::endl;
     std::cout << "========================================" << std::endl;
     std::cout << "Iterations: " << iterations << std::endl;
     std::cout << "Molecule Cap: " << molCap << std::endl;
@@ -63,21 +21,24 @@ int main(int argc, char *argv[]) {
     double baseline_time = 0;
 
     // Test with 1 thread (baseline)
+    std::cout << "Test 1: Single-threaded (1 thread)" << std::endl;
     {
         fraglets frag;
-        setup_fraglets(frag);
+        frag.interpret("sort.fra");
         auto start = std::chrono::high_resolution_clock::now();
         frag.run(iterations, molCap, true, true, 1);
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
         baseline_time = duration.count();
         std::cout << " 1 thread(s): " << std::setw(6) << duration.count() << " ms (baseline)" << std::endl;
+        std::cout << std::endl;
     }
 
     // Test with 2 threads
+    std::cout << "Test 2: Multi-threaded (2 threads)" << std::endl;
     {
         fraglets frag;
-        setup_fraglets(frag);
+        frag.interpret("sort.fra");
         auto start = std::chrono::high_resolution_clock::now();
         frag.run(iterations, molCap, true, true, 2);
         auto end = std::chrono::high_resolution_clock::now();
@@ -85,12 +46,14 @@ int main(int argc, char *argv[]) {
         double speedup = baseline_time / duration.count();
         std::cout << " 2 thread(s): " << std::setw(6) << duration.count()
                   << " ms (speedup: " << std::fixed << std::setprecision(2) << speedup << "x)" << std::endl;
+        std::cout << std::endl;
     }
 
     // Test with 4 threads
+    std::cout << "Test 3: Multi-threaded (4 threads)" << std::endl;
     {
         fraglets frag;
-        setup_fraglets(frag);
+        frag.interpret("sort.fra");
         auto start = std::chrono::high_resolution_clock::now();
         frag.run(iterations, molCap, true, true, 4);
         auto end = std::chrono::high_resolution_clock::now();
@@ -98,12 +61,14 @@ int main(int argc, char *argv[]) {
         double speedup = baseline_time / duration.count();
         std::cout << " 4 thread(s): " << std::setw(6) << duration.count()
                   << " ms (speedup: " << std::fixed << std::setprecision(2) << speedup << "x)" << std::endl;
+        std::cout << std::endl;
     }
 
     // Test with 8 threads
+    std::cout << "Test 4: Multi-threaded (8 threads)" << std::endl;
     {
         fraglets frag;
-        setup_fraglets(frag);
+        frag.interpret("sort.fra");
         auto start = std::chrono::high_resolution_clock::now();
         frag.run(iterations, molCap, true, true, 8);
         auto end = std::chrono::high_resolution_clock::now();
@@ -111,9 +76,9 @@ int main(int argc, char *argv[]) {
         double speedup = baseline_time / duration.count();
         std::cout << " 8 thread(s): " << std::setw(6) << duration.count()
                   << " ms (speedup: " << std::fixed << std::setprecision(2) << speedup << "x)" << std::endl;
+        std::cout << std::endl;
     }
 
-    std::cout << std::endl;
     std::cout << "========================================" << std::endl;
     std::cout << "Benchmark Complete" << std::endl;
     std::cout << "========================================" << std::endl;
