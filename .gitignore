@@ -11,3 +11,7 @@ Cargo.lock
 # OS files
 .DS_Store
 Thumbs.db
+
+# Visualization outputs
+*.dot
+*.png

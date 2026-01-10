@@ -16,6 +16,9 @@ fn main() {
         println!("  --diffusion <rate>  Molecule migration rate 0.0-1.0 (default: 0.05)");
         println!("  --quiet             Suppress output");
         println!("  --trace             Show final molecule state");
+        println!("  --viz <file.dot>    Generate reaction network visualization");
+        println!("  --viz-regions <f>   Generate region flow visualization");
+        println!("  --viz-ops <file>    Generate operation type visualization");
         std::process::exit(1);
     }
 
@@ -25,6 +28,9 @@ fn main() {
     let mut diffusion = 0.05;
     let mut quiet = false;
     let mut trace = false;
+    let mut viz_network: Option<String> = None;
+    let mut viz_regions: Option<String> = None;
+    let mut viz_ops: Option<String> = None;
 
     // Parse arguments
     let mut i = 2;
@@ -50,6 +56,24 @@ fn main() {
             }
             "--quiet" => quiet = true,
             "--trace" => trace = true,
+            "--viz" => {
+                i += 1;
+                if i < args.len() {
+                    viz_network = Some(args[i].clone());
+                }
+            }
+            "--viz-regions" => {
+                i += 1;
+                if i < args.len() {
+                    viz_regions = Some(args[i].clone());
+                }
+            }
+            "--viz-ops" => {
+                i += 1;
+                if i < args.len() {
+                    viz_ops = Some(args[i].clone());
+                }
+            }
             _ => {
                 eprintln!("Unknown option: {}", args[i]);
             }
@@ -86,7 +110,8 @@ fn main() {
         builder = builder.add_unimol_rule(rule);
     }
 
-    // Add molecules
+    // Add molecules (save copy for visualization)
+    let initial_molecules = molecules.clone();
     builder = builder.add_molecules(molecules);
 
     // Run
@@ -102,6 +127,29 @@ fn main() {
         println!("Completed in {:.2}ms", result.duration.as_secs_f64() * 1000.0);
         println!("Total reactions: {}", result.total_reactions());
         println!("Remaining molecules: {}", result.total_molecules());
+    }
+
+    // Generate visualizations if requested
+    if let Some(path) = viz_network {
+        if let Err(e) = generate_reaction_network(&initial_molecules, &result, &path) {
+            eprintln!("Error generating network visualization: {}", e);
+        } else if !quiet {
+            println!("Reaction network saved to: {}", path);
+        }
+    }
+    if let Some(path) = viz_regions {
+        if let Err(e) = generate_region_flow(&result, &path) {
+            eprintln!("Error generating region flow: {}", e);
+        } else if !quiet {
+            println!("Region flow saved to: {}", path);
+        }
+    }
+    if let Some(path) = viz_ops {
+        if let Err(e) = generate_operation_graph(&initial_molecules, &path) {
+            eprintln!("Error generating operation graph: {}", e);
+        } else if !quiet {
+            println!("Operation graph saved to: {}", path);
+        }
     }
 
     if trace {
