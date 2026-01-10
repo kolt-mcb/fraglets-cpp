@@ -3,9 +3,13 @@
 
 #include "keymultiset.h"
 #include <map>
-#include <vector> 
+#include <vector>
 #include <functional>
 #include <graphviz/gvc.h>
+#include <thread>
+#include <mutex>
+#include <atomic>
+#include <condition_variable>
 
 
 typedef std::map<std::string, double> propMap;
@@ -74,7 +78,11 @@ class fraglets {
         int run_unimol();
         bool quiet;
 
-        
+        // Multi-threading support
+        std::mutex multiset_mutex;  // Protects active, passive, unimol multisets
+        std::mutex inject_mutex;    // Protects inject operations
+        int num_threads;            // Number of worker threads
+        void worker_thread_func(int thread_id, int niter);  // Worker function
 
     public:
         bool isbimol(const molecule_pointer mol);
@@ -82,6 +90,8 @@ class fraglets {
         bool isMatchp(const molecule_pointer mol);
         bool isunimol(const molecule_pointer mol);
         void run(int niter,int molCap,bool quiet);
+        void run_parallel(int niter,int molCap,bool quiet,int threads);  // Parallel version
+        void set_num_threads(int threads);  // Set number of threads
         void parse(std::string line);
         void interpret(std::string filename);
         void trace();

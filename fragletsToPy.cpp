@@ -71,6 +71,28 @@ PyObject* run(PyObject* self, PyObject* args)
     return Py_BuildValue("");
 }
 
+PyObject* run_parallel(PyObject* self, PyObject* args)
+{
+    PyObject* fragletsCapsule_;
+    int iter_;
+    int size_;
+    bool quiet_;
+    int threads_;
+    // Process arguments
+    PyArg_ParseTuple(args, "Oiibi",
+                     &fragletsCapsule_,
+                     &iter_,
+                     &size_,
+                     &quiet_,
+                     &threads_);
+    fraglets* frag = (fraglets*)PyCapsule_GetPointer(fragletsCapsule_, "fragletsPtr");
+
+    frag->run_parallel(iter_,size_,quiet_,threads_);
+
+    // Return nothing
+    return Py_BuildValue("");
+}
+
 PyObject* getIter(PyObject* self, PyObject* args)
 {
     PyObject* fragletsCapsule_;
@@ -137,6 +159,8 @@ static PyMethodDef fragletsFunctions[] =
      "Create `fraglets` object"},
     {"run",run, METH_VARARGS,
     "runs vessel"},
+    {"run_parallel",run_parallel, METH_VARARGS,
+    "runs vessel with multiple threads"},
     {"parse",parse, METH_VARARGS,
     "parses string and injects mol"},
     {"getUnimolTags",getUnimolTags,METH_VARARGS,
