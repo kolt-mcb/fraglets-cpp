@@ -73,9 +73,14 @@ pub fn op_fork(mol: &Molecule) -> Option<Vec<Molecule>> {
     ])
 }
 
-/// nop - no operation (molecule unchanged)
+/// nop - removes itself and returns the tail
 pub fn op_nop(mol: &Molecule) -> Option<Vec<Molecule>> {
-    Some(vec![Molecule::from_strings(mol.symbols.clone())])
+    let tail = mol.tail();
+    if !tail.is_empty() {
+        Some(vec![Molecule::from_strings(tail)])
+    } else {
+        None // Molecule disappears if only [nop]
+    }
 }
 
 /// empty - creates empty marker molecule

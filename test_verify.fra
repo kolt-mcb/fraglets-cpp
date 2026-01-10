@@ -1,0 +1,3 @@
+# Test that produces final output
+[nop result 42]
+[nop test 99]

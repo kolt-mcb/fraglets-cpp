@@ -79,6 +79,7 @@ impl FragletsSystem {
                     id: region.id,
                     reactions: region.reactions_processed,
                     remaining_molecules: region.molecules,
+                    reaction_history: region.reaction_history,
                 }
             });
 

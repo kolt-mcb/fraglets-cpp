@@ -1,6 +1,6 @@
 // Extended Region with bimolecular operation support
 
-use crate::{Molecule, ReactionRule, BimolOp};
+use crate::{Molecule, ReactionRule, BimolOp, ReactionEvent, ReactionType};
 use crossbeam_channel::{Sender, Receiver};
 use rand::Rng;
 
@@ -38,6 +38,7 @@ pub struct BimolRegion {
     pub outboxes: Vec<Sender<Molecule>>,
     pub reactions_processed: usize,
     pub diffusion_rate: f64,
+    pub reaction_history: Vec<ReactionEvent>,
 }
 
 impl BimolRegion {
@@ -56,6 +57,7 @@ impl BimolRegion {
             outboxes,
             reactions_processed: 0,
             diffusion_rate,
+            reaction_history: Vec::new(),
         }
     }
 
@@ -87,8 +89,18 @@ impl BimolRegion {
 
             for rule in &self.unimol_rules {
                 if let Some(products) = rule.apply(mol) {
+                    let reactant = mol.clone();
                     self.molecules.swap_remove(i);
-                    self.molecules.extend(products);
+                    self.molecules.extend(products.clone());
+
+                    // Record reaction
+                    self.reaction_history.push(ReactionEvent {
+                        reactants: vec![reactant],
+                        products,
+                        reaction_type: ReactionType::Unimol,
+                        region_id: self.id,
+                    });
+
                     self.reactions_processed += 1;
                     reactions += 1;
                     reacted = true;
@@ -118,13 +130,26 @@ impl BimolRegion {
                 if mol1.head() == Some(rule.pattern.as_str()) {
                     // Look for a partner molecule
                     if let Some((j, products)) = self.find_bimol_partner(i, rule) {
+                        // Save reactants before removing
+                        let reactant1 = self.molecules[i].clone();
+                        let reactant2 = self.molecules[j].clone();
+                        let is_matchp = rule.pattern == "matchp";
+
                         // Remove both molecules (remove higher index first)
                         let (idx1, idx2) = if i < j { (j, i) } else { (i, j) };
                         self.molecules.swap_remove(idx1);
                         self.molecules.swap_remove(idx2);
 
                         // Add products
-                        self.molecules.extend(products);
+                        self.molecules.extend(products.clone());
+
+                        // Record reaction
+                        self.reaction_history.push(ReactionEvent {
+                            reactants: vec![reactant1, reactant2],
+                            products,
+                            reaction_type: if is_matchp { ReactionType::Matchp } else { ReactionType::Bimol },
+                            region_id: self.id,
+                        });
 
                         self.reactions_processed += 1;
                         reactions += 1;
@@ -175,7 +200,10 @@ impl BimolRegion {
 
         for mol in migrants {
             let neighbor = rng.gen_range(0..self.outboxes.len());
-            let _ = self.outboxes[neighbor].send(mol);
+            // Use try_send to avoid blocking - if channel is full, keep the molecule
+            if self.outboxes[neighbor].try_send(mol.clone()).is_err() {
+                self.molecules.push(mol);
+            }
         }
     }
 }

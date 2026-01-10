@@ -108,6 +108,7 @@ pub struct Region {
     pub outboxes: Vec<Sender<Molecule>>,
     pub reactions_processed: usize,
     pub diffusion_rate: f64,
+    pub reaction_history: Vec<ReactionEvent>,
 }
 
 impl Region {
@@ -125,6 +126,7 @@ impl Region {
             outboxes,
             reactions_processed: 0,
             diffusion_rate,
+            reaction_history: Vec::new(),
         }
     }
 
@@ -159,11 +161,22 @@ impl Region {
             // Try each rule
             for rule in &self.rules {
                 if let Some(products) = rule.apply(mol) {
+                    // Save reactant before removing
+                    let reactant = mol.clone();
+
                     // Remove reactant
                     self.molecules.swap_remove(i);
 
                     // Add products
-                    self.molecules.extend(products);
+                    self.molecules.extend(products.clone());
+
+                    // Record reaction
+                    self.reaction_history.push(ReactionEvent {
+                        reactants: vec![reactant],
+                        products,
+                        reaction_type: ReactionType::Unimol,
+                        region_id: self.id,
+                    });
 
                     self.reactions_processed += 1;
                     reactions += 1;
@@ -199,7 +212,10 @@ impl Region {
         // Send to random neighbors
         for mol in migrants {
             let neighbor = rng.gen_range(0..self.outboxes.len());
-            let _ = self.outboxes[neighbor].send(mol);
+            // Use try_send to avoid blocking - if channel is full, keep the molecule
+            if self.outboxes[neighbor].try_send(mol.clone()).is_err() {
+                self.molecules.push(mol);
+            }
         }
     }
 
@@ -290,6 +306,7 @@ impl SpatialFraglets {
                     id: region.id,
                     reactions: region.reactions_processed,
                     remaining_molecules: region.molecules,
+                    reaction_history: region.reaction_history,
                 }
             });
 
@@ -315,11 +332,27 @@ impl SpatialFraglets {
 // RESULTS
 // ============================================================================
 
+#[derive(Debug, Clone)]
+pub enum ReactionType {
+    Unimol,
+    Bimol,
+    Matchp,
+}
+
+#[derive(Debug, Clone)]
+pub struct ReactionEvent {
+    pub reactants: Vec<Molecule>,
+    pub products: Vec<Molecule>,
+    pub reaction_type: ReactionType,
+    pub region_id: usize,
+}
+
 #[derive(Debug)]
 pub struct RegionResult {
     pub id: usize,
     pub reactions: usize,
     pub remaining_molecules: Vec<Molecule>,
+    pub reaction_history: Vec<ReactionEvent>,
 }
 
 #[derive(Debug)]
