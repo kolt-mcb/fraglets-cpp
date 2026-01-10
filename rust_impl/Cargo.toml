@@ -1,0 +1,24 @@
+[package]
+name = "spatial_fraglets"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+crossbeam-channel = "0.5"
+rand = "0.8"
+
+[[bin]]
+name = "demo"
+path = "src/main.rs"
+
+[[bin]]
+name = "benchmark"
+path = "src/benchmark.rs"
+
+[[bin]]
+name = "heavy"
+path = "src/heavy_benchmark.rs"
+
+[[bin]]
+name = "massive"
+path = "src/massive_benchmark.rs"
