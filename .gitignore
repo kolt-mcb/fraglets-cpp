@@ -1,0 +1,41 @@
+# Compiled Object files
+*.o
+*.obj
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+fraglets
+
+# Qt-specific
+moc_*.cpp
+moc_*.h
+qrc_*.cpp
+ui_*.h
+*.autosave
+moc_predefs.h
+
+# Build directories
+build/
+debug/
+release/
+.tmp/
+
+# IDE files
+.vscode/
+.idea/
+*.user
+*.pro.user*
+
+# OS files
+.DS_Store
+Thumbs.db
