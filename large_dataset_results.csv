@@ -1,0 +1,5 @@
+Threads,Sequential_ms,Parallel_ms,AlgoImprovement_pct,ThreadSpeedup
+1,1455,0,100,-nan
+2,11367,10,99.912,0
+4,16114,7,99.9566,0
+8,60858,32,99.9474,0

@@ -1,0 +1,43 @@
+# Parallel Sort with LARGE dataset
+# 100 random numbers - should be enough to see threading benefits
+
+[matchp parsort partition 8 sortchunk]
+
+# Same sorting logic as before
+[matchp sortchunk pop initsort]
+[matchp initsort split getsorted * getun sorted]
+[matchp getsorted match getmin]
+[matchp getmin match unsorted extractmin]
+
+[matchp extractmin copy check]
+[matchp check length chklen]
+[matchp chklen lt addmin moreelems 2]
+
+[matchp addmin pop2 check match sorted done]
+
+[matchp moreelems pop2 check split first * rest]
+[matchp first match rest match unsorted compareall]
+
+[matchp compareall split a * b]
+[matchp a match b match unsorted docompare]
+[matchp docompare lt asmaller bsmaller]
+
+[matchp asmaller match unsorted split minval * remaining]
+[matchp minval match remaining match sorted continuesort]
+
+[matchp bsmaller exch match unsorted split minval * remaining]
+
+[matchp continuesort dup getsorted]
+
+[matchp done pop getmin match mergewait]
+
+# Merging
+[matchp mergewait match mergewait beginmerge]
+[matchp beginmerge split list1 * list2]
+[matchp list1 match list2 mergethem]
+[matchp mergethem match merge sendmerged]
+[matchp sendmerged pop mergewait]
+
+# LARGE DATASET - 100 random numbers
+[parsort 456 123 789 234 901 345 567 678 890 112 432 298 156 723 389 545 667 881 223 445 556 778 990 111 333 555 777 999 222 444 666 888 100 200 300 400 500 600 700 800 900 101 202 303 404 505 606 707 808 909 110 220 330 440 550 660 770 880 990 121 232 343 454 565 676 787 898 909 131 242 353 464 575 686 797 808 919 141 252 363 474 585 696 707 818 929 151 262 373 484 595 606 717 828 939 161 272 383 494 505]
+

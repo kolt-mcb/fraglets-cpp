@@ -1,0 +1,27 @@
+# Sequential sort.fra with LARGE dataset
+# Same 100 numbers as parsort_large.fra
+
+[sorted]
+[matchp sort empty finish continue]
+[matchp continue split remain * getmin]
+
+[matchp min split match remain sort * split match sorted match tosorted sorted * tosorted]
+
+[matchp getmin length len1]
+[matchp len1 lt getmin2 min2 1]
+
+[matchp min2 pop d1]
+[matchp d1 pop min]
+
+[matchp getmin2 pop d11]
+[matchp d11 pop getmin3]
+
+[matchp getmin3 lt islt nlt]
+[matchp nlt pop2 r1 getmin]
+[matchp islt exch nlt]
+
+[matchp r1 match remain remain]
+
+# LARGE DATASET - same 100 numbers
+[sort 456 123 789 234 901 345 567 678 890 112 432 298 156 723 389 545 667 881 223 445 556 778 990 111 333 555 777 999 222 444 666 888 100 200 300 400 500 600 700 800 900 101 202 303 404 505 606 707 808 909 110 220 330 440 550 660 770 880 990 121 232 343 454 565 676 787 898 909 131 242 353 464 575 686 797 808 919 141 252 363 474 585 696 707 818 929 151 262 373 484 595 606 717 828 939 161 272 383 494 505]
+

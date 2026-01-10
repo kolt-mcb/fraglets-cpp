@@ -24,6 +24,9 @@ benchmark_large
 test_parsort
 test_operations
 compare_sorts
+test_large_dataset
+test_threading
+verify_sort
 
 # Qt-specific
 moc_*.cpp
