@@ -1,53 +1,12 @@
-# Compiled Object files
-*.o
-*.obj
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Compiled Static libraries
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-fraglets
-fraglets_benchmark
-fraglets_simple
-test_mt
-test_single
-test_sort
-benchmark_large
-test_parsort
-test_operations
-compare_sorts
-test_large_dataset
-test_threading
-verify_sort
-test_massive
-
-# Qt-specific
-moc_*.cpp
-moc_*.h
-qrc_*.cpp
-ui_*.h
-*.autosave
-moc_predefs.h
-
-# Build directories
-build/
-debug/
-release/
-.tmp/
+# Rust build artifacts
+/target/
+Cargo.lock
 
 # IDE files
 .vscode/
 .idea/
-*.user
-*.pro.user*
+*.swp
+*.swo
 
 # OS files
 .DS_Store
