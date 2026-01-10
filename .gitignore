@@ -27,6 +27,7 @@ compare_sorts
 test_large_dataset
 test_threading
 verify_sort
+test_massive
 
 # Qt-specific
 moc_*.cpp
