@@ -26,3 +26,7 @@ path = "src/massive_benchmark.rs"
 [[bin]]
 name = "fraglets"
 path = "src/bin/fraglets.rs"
+
+[[example]]
+name = "multiplicity_benchmark"
+path = "examples/multiplicity_benchmark.rs"
