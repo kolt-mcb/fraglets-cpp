@@ -12,22 +12,48 @@ pub fn op_nul(_mol: &Molecule) -> Option<Vec<Molecule>> {
     Some(vec![]) // Molecule disappears
 }
 
-/// pop - removes first symbol
+/// pop - keeps element at index 1, removes element at index 2, keeps rest
+/// This is used to remove the count while preserving the tag
 pub fn op_pop(mol: &Molecule) -> Option<Vec<Molecule>> {
-    if mol.symbols.len() > 1 {
-        Some(vec![Molecule::from_strings(mol.tail())])
+    if mol.symbols.len() < 2 {
+        return None;
+    }
+
+    if mol.symbols.len() < 4 {
+        // Size 2-3: return just element at index 1
+        Some(vec![Molecule::new(vec![&mol.symbols[1]])])
     } else {
-        Some(vec![]) // Disappears if only head
+        // Size >= 4: keep index 1, skip index 2, keep rest
+        let mut result = vec![mol.symbols[1].clone()];
+        result.extend_from_slice(&mol.symbols[3..]);
+        Some(vec![Molecule::from_strings(result)])
     }
 }
 
-/// pop2 - removes first two symbols
+/// pop2 - removes elements at index 2 and 3
 pub fn op_pop2(mol: &Molecule) -> Option<Vec<Molecule>> {
-    if mol.symbols.len() > 2 {
-        let tail: Vec<String> = mol.symbols[2..].to_vec();
-        Some(vec![Molecule::from_strings(tail)])
+    if mol.symbols.len() < 3 {
+        return None;
+    }
+
+    if mol.symbols.len() == 3 {
+        // Return two separate molecules with index 1 and 2
+        Some(vec![
+            Molecule::new(vec![&mol.symbols[1]]),
+            Molecule::new(vec![&mol.symbols[2]]),
+        ])
     } else {
-        Some(vec![]) // Disappears if too short
+        // Size > 3: return two molecules
+        // First: [index_1, index_3]
+        // Second: everything from index 4 onward
+        let mol1 = Molecule::new(vec![&mol.symbols[1], &mol.symbols[3]]);
+
+        if mol.symbols.len() > 4 {
+            let tail: Vec<String> = mol.symbols[4..].to_vec();
+            Some(vec![mol1, Molecule::from_strings(tail)])
+        } else {
+            Some(vec![mol1])
+        }
     }
 }
 
@@ -133,33 +159,27 @@ pub fn op_length(mol: &Molecule) -> Option<Vec<Molecule>> {
     Some(vec![Molecule::from_strings(result)])
 }
 
-/// lt - less than comparison
+/// lt - less than comparison of two numbers at index 3 and 4
 pub fn op_lt(mol: &Molecule) -> Option<Vec<Molecule>> {
-    // [lt tag1 tag2 num]
-    if mol.symbols.len() >= 4 {
-        let tag1 = &mol.symbols[1];
-        let tag2 = &mol.symbols[2];
-        let num_str = &mol.symbols[3];
+    // [lt tag1 tag2 num1 num2 ...]
+    if mol.symbols.len() <= 4 {
+        return None;
+    }
 
-        if let Ok(num) = num_str.parse::<i64>() {
-            // Get remaining elements
-            let rest: Vec<String> = mol.symbols[4..].to_vec();
-            let rest_len = rest.len() as i64;
+    let tag1 = &mol.symbols[1];
+    let tag2 = &mol.symbols[2];
+    let num1_str = &mol.symbols[3];
+    let num2_str = &mol.symbols[4];
 
-            if rest_len < num {
-                // tag1 branch
-                let mut result = vec![tag1.clone()];
-                result.extend(rest);
-                Some(vec![Molecule::from_strings(result)])
-            } else {
-                // tag2 branch
-                let mut result = vec![tag2.clone()];
-                result.extend(rest);
-                Some(vec![Molecule::from_strings(result)])
-            }
-        } else {
-            None
-        }
+    // Try to parse both as numbers
+    if let (Ok(num1), Ok(num2)) = (num1_str.parse::<i64>(), num2_str.parse::<i64>()) {
+        let chosen_tag = if num1 < num2 { tag1 } else { tag2 };
+
+        // Build result: [chosen_tag, num1, num2, ...]
+        let mut result = vec![chosen_tag.clone()];
+        result.extend_from_slice(&mol.symbols[3..]);
+
+        Some(vec![Molecule::from_strings(result)])
     } else {
         None
     }
