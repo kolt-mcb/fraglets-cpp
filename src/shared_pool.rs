@@ -162,10 +162,32 @@ impl SharedPool {
                     if let Some(head) = matchp_mol.head() {
                         if head == "matchp" {
                             if let Some(products) = crate::op_matchp(matchp_mol, &mol) {
+                                // op_matchp returns [matchp_rule, result]
+                                // We only insert the result, not the matchp rule (it's already in matchp_rules)
+                                let filtered: Vec<_> = products.into_iter()
+                                    .filter(|m| m.head() != Some("matchp"))
+                                    .collect();
+                                self.insert_many(filtered);
+                                self.reactions.fetch_add(1, Ordering::Relaxed);
+                                return true;
+                            }
+                        }
+                    }
+                }
+
+                // Try bimolecular match with another data molecule
+                // e.g., [match remain X] + [remain Y] → products
+                if mol.head() == Some("match") {
+                    if let Some(pattern) = mol.symbols.get(1) {
+                        // Try to find a partner molecule with matching head
+                        if let Some(partner) = self.try_pop(pattern) {
+                            if let Some(products) = crate::op_match(&mol, &partner) {
                                 self.insert_many(products);
                                 self.reactions.fetch_add(1, Ordering::Relaxed);
                                 return true;
                             }
+                            // No reaction, put partner back
+                            self.insert(partner);
                         }
                     }
                 }
@@ -192,13 +214,11 @@ impl SharedPool {
     }
 
     fn run_single_threaded(&self, max_iterations: usize) -> usize {
-        let mut iterations = 0;
-
-        while iterations < max_iterations && self.total_molecules() > 0 {
-            if !self.try_react() {
-                break;  // Idle
+        for _ in 0..max_iterations {
+            if self.total_molecules() == 0 {
+                break;
             }
-            iterations += 1;
+            self.try_react();
         }
 
         self.reactions.load(Ordering::Relaxed)

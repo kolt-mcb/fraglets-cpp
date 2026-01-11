@@ -35,3 +35,7 @@ path = "examples/multiplicity_benchmark.rs"
 [[example]]
 name = "shared_pool_vs_regions"
 path = "examples/shared_pool_vs_regions.rs"
+
+[[example]]
+name = "test_sort"
+path = "examples/test_sort.rs"
