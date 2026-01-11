@@ -6,6 +6,9 @@ use crate::fraglets_ops::{op_match, op_matchp};
 use crate::ReactionRule;
 use crossbeam_channel::bounded;
 use std::thread;
+use std::sync::Arc;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 pub struct FragletsSystem {
     pub num_regions: usize,
@@ -61,7 +64,16 @@ impl FragletsSystem {
             let diffusion_rate = self.diffusion_rate;
 
             let handle = thread::spawn(move || {
-                let mut region = BimolRegion::new(region_id, receiver, outboxes, diffusion_rate);
+                // Create empty persistent matchp (old API doesn't use it)
+                let persistent_matchp = Arc::new(Vec::new());
+                let mut region = BimolRegion::new(
+                    region_id,
+                    receiver,
+                    outboxes,
+                    diffusion_rate,
+                    persistent_matchp,
+                    false,  // Don't use pattern routing in old API
+                );
 
                 region.molecules = molecules;
                 region.unimol_rules = unimol_rules;
@@ -107,6 +119,7 @@ pub struct CompleteFragletsBuilder {
     bimol_rules: Vec<BimolReactionRule>,
     num_regions: usize,
     diffusion_rate: f64,
+    use_pattern_routing: bool,
 }
 
 impl CompleteFragletsBuilder {
@@ -123,6 +136,7 @@ impl CompleteFragletsBuilder {
             bimol_rules,
             num_regions: 4,
             diffusion_rate: 0.05,
+            use_pattern_routing: true,  // Enable by default
         }
     }
 
@@ -133,6 +147,11 @@ impl CompleteFragletsBuilder {
 
     pub fn diffusion(mut self, rate: f64) -> Self {
         self.diffusion_rate = rate;
+        self
+    }
+
+    pub fn pattern_routing(mut self, enabled: bool) -> Self {
+        self.use_pattern_routing = enabled;
         self
     }
 
@@ -157,8 +176,111 @@ impl CompleteFragletsBuilder {
     }
 
     pub fn run(self, max_iterations: usize) -> RunResult {
-        let system = FragletsSystem::with_diffusion(self.num_regions, self.diffusion_rate);
-        system.run(self.molecules, self.unimol_rules, self.bimol_rules, max_iterations)
+        let start = std::time::Instant::now();
+
+        // Separate persistent matchp molecules from data molecules
+        let mut persistent_matchp = Vec::new();
+        let mut data_molecules = Vec::new();
+
+        for mol in self.molecules {
+            if mol.head() == Some("matchp") {
+                persistent_matchp.push(mol);
+            } else {
+                data_molecules.push(mol);
+            }
+        }
+
+        // Create shared Arc for persistent matchp rules
+        let shared_matchp = Arc::new(persistent_matchp);
+
+        // Create channels
+        let mut channels = Vec::new();
+        for _ in 0..self.num_regions {
+            channels.push(bounded(1000));
+        }
+
+        let senders: Vec<_> = channels.iter().map(|(s, _)| s.clone()).collect();
+
+        // Distribute data molecules by pattern routing or round-robin
+        let mut region_molecules: Vec<Vec<Molecule>> = vec![Vec::new(); self.num_regions];
+
+        if self.use_pattern_routing {
+            // Pattern-based routing
+            for mol in data_molecules {
+                let pattern = mol.head().unwrap_or("");
+                let target_region = Self::hash_pattern(pattern) % self.num_regions;
+                region_molecules[target_region].push(mol);
+            }
+        } else {
+            // Round-robin distribution (old behavior)
+            for (i, mol) in data_molecules.into_iter().enumerate() {
+                region_molecules[i % self.num_regions].push(mol);
+            }
+        }
+
+        // Spawn worker threads
+        let mut handles = Vec::new();
+
+        for (region_id, (_sender, receiver)) in channels.into_iter().enumerate() {
+            let outboxes = senders.clone();
+            let molecules = region_molecules.remove(0);
+            let unimol_rules = self.unimol_rules.clone();
+            let bimol_rules = self.bimol_rules.clone();
+            let diffusion_rate = self.diffusion_rate;
+            let persistent_matchp = shared_matchp.clone();
+            let use_pattern_routing = self.use_pattern_routing;
+
+            let handle = thread::spawn(move || {
+                let mut region = BimolRegion::new(
+                    region_id,
+                    receiver,
+                    outboxes,
+                    diffusion_rate,
+                    persistent_matchp,
+                    use_pattern_routing,
+                );
+
+                region.molecules = molecules;
+                region.unimol_rules = unimol_rules;
+                region.bimol_rules = bimol_rules;
+
+                for _iteration in 0..max_iterations {
+                    let active = region.step();
+
+                    if !active && region.molecules.is_empty() {
+                        break;
+                    }
+                }
+
+                RegionResult {
+                    id: region.id,
+                    reactions: region.reactions_processed,
+                    remaining_molecules: region.molecules,
+                    reaction_history: region.reaction_history,
+                }
+            });
+
+            handles.push(handle);
+        }
+
+        // Wait for all threads
+        let mut results = Vec::new();
+        for handle in handles {
+            results.push(handle.join().unwrap());
+        }
+
+        let duration = start.elapsed();
+
+        RunResult {
+            duration,
+            regions: results,
+        }
+    }
+
+    fn hash_pattern(pattern: &str) -> usize {
+        let mut hasher = DefaultHasher::new();
+        pattern.hash(&mut hasher);
+        hasher.finish() as usize
     }
 }
 

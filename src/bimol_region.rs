@@ -3,6 +3,9 @@
 use crate::{Molecule, ReactionRule, BimolOp, ReactionEvent, ReactionType};
 use crossbeam_channel::{Sender, Receiver};
 use rand::Rng;
+use std::sync::Arc;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 pub struct BimolReactionRule {
     pub name: String,
@@ -34,11 +37,13 @@ pub struct BimolRegion {
     pub molecules: Vec<Molecule>,
     pub unimol_rules: Vec<ReactionRule>,
     pub bimol_rules: Vec<BimolReactionRule>,
+    pub persistent_matchp: Arc<Vec<Molecule>>,  // Shared across all regions
     pub inbox: Receiver<Molecule>,
     pub outboxes: Vec<Sender<Molecule>>,
     pub reactions_processed: usize,
     pub diffusion_rate: f64,
     pub reaction_history: Vec<ReactionEvent>,
+    pub use_pattern_routing: bool,  // Enable pattern-based routing
 }
 
 impl BimolRegion {
@@ -47,17 +52,21 @@ impl BimolRegion {
         inbox: Receiver<Molecule>,
         outboxes: Vec<Sender<Molecule>>,
         diffusion_rate: f64,
+        persistent_matchp: Arc<Vec<Molecule>>,
+        use_pattern_routing: bool,
     ) -> Self {
         BimolRegion {
             id,
             molecules: Vec::new(),
             unimol_rules: Vec::new(),
             bimol_rules: Vec::new(),
+            persistent_matchp,
             inbox,
             outboxes,
             reactions_processed: 0,
             diffusion_rate,
             reaction_history: Vec::new(),
+            use_pattern_routing,
         }
     }
 
@@ -70,10 +79,14 @@ impl BimolRegion {
         }
 
         // 2. Process reactions
-        let reacted = self.react_unimol() + self.react_bimol();
+        let reacted = self.react_unimol() + self.react_bimol() + self.react_persistent_matchp();
 
-        // 3. Simulate diffusion
-        self.diffuse();
+        // 3. Simulate diffusion or routing
+        if self.use_pattern_routing {
+            self.route_molecules();
+        } else {
+            self.diffuse();
+        }
 
         // Continue if we did any work or have molecules
         reacted > 0 || received > 0 || !self.molecules.is_empty()
@@ -205,5 +218,104 @@ impl BimolRegion {
                 self.molecules.push(mol);
             }
         }
+    }
+
+    /// React local molecules against shared persistent matchp rules
+    fn react_persistent_matchp(&mut self) -> usize {
+        use crate::fraglets_ops::op_matchp;
+
+        let mut reactions = 0;
+        let mut i = 0;
+
+        while i < self.molecules.len() {
+            let mol = &self.molecules[i];
+            let mut matched = false;
+
+            // Try to match against each persistent matchp rule
+            for matchp_rule in self.persistent_matchp.iter() {
+                if matchp_rule.head() != Some("matchp") {
+                    continue;
+                }
+
+                // Check if this matchp can react with mol
+                if let Some(products) = op_matchp(matchp_rule, mol) {
+                    // Save reactants
+                    let reactant1 = matchp_rule.clone();
+                    let reactant2 = mol.clone();
+
+                    // Remove the data molecule (matchp rule persists via shared Arc)
+                    self.molecules.swap_remove(i);
+
+                    // op_matchp returns [matchp_rule, result]
+                    // We only add the result since matchp_rule is already in persistent_matchp
+                    if products.len() >= 2 {
+                        // Add only the result (skip the first element which is the matchp rule)
+                        self.molecules.extend(products[1..].iter().cloned());
+                    }
+
+                    // Record reaction with full products for history
+                    self.reaction_history.push(ReactionEvent {
+                        reactants: vec![reactant1, reactant2],
+                        products,
+                        reaction_type: ReactionType::Matchp,
+                        region_id: self.id,
+                    });
+
+                    self.reactions_processed += 1;
+                    reactions += 1;
+                    matched = true;
+                    break;
+                }
+            }
+
+            if !matched {
+                i += 1;
+            }
+        }
+
+        reactions
+    }
+
+    /// Route molecules to appropriate regions based on head pattern
+    fn route_molecules(&mut self) {
+        if self.outboxes.is_empty() {
+            return;
+        }
+
+        let num_regions = self.outboxes.len();
+        let mut to_route = Vec::new();
+
+        // Collect molecules that should be routed
+        for i in (0..self.molecules.len()).rev() {
+            let mol = &self.molecules[i];
+
+            // Skip matchp rules - they stay in shared Arc
+            if mol.head() == Some("matchp") {
+                continue;
+            }
+
+            // Calculate target region based on head pattern
+            let target_region = Self::hash_pattern(mol.head().unwrap_or("")) % num_regions;
+
+            // If not in correct region, route it
+            if target_region != self.id {
+                to_route.push((target_region, self.molecules.swap_remove(i)));
+            }
+        }
+
+        // Send molecules to target regions
+        for (target, mol) in to_route {
+            if self.outboxes[target].try_send(mol.clone()).is_err() {
+                // If send fails, keep the molecule locally
+                self.molecules.push(mol);
+            }
+        }
+    }
+
+    /// Hash a pattern string to determine target region
+    fn hash_pattern(pattern: &str) -> usize {
+        let mut hasher = DefaultHasher::new();
+        pattern.hash(&mut hasher);
+        hasher.finish() as usize
     }
 }
