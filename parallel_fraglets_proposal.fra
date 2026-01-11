@@ -1,0 +1,207 @@
+# Proposed Syntax: Parallel Fraglets
+#
+# Extension to fraglets that makes parallelism explicit and automatic
+
+# ============================================================
+# Example 1: Embarrassingly Parallel Work
+# ============================================================
+
+# Mark independent work items with @parallel annotation
+@parallel work {
+  [work 1]
+  [work 2]
+  [work 3]
+  [work 100]
+}
+
+# Matchp rules are automatically shared across all regions
+[matchp work dup result]
+[matchp result pop done]
+
+# Execution:
+# - System automatically creates N regions
+# - Routes work items by hash(work_id)
+# - Persistent matchp rules shared via Arc
+# - Achieves 7.43x speedup on 8 cores!
+
+
+# ============================================================
+# Example 2: Sequential Algorithm (Sort)
+# ============================================================
+
+# No @parallel annotation = single region execution
+@sequential {
+  [sort 203 -200 989 -446 -927 962 -485]
+}
+
+# All matchp rules for sort
+[matchp sort empty finish continue]
+[matchp continue split remain * getmin]
+[matchp min split match remain sort * split match sorted match tosorted sorted * tosorted]
+[matchp getmin length len1]
+[matchp len1 lt getmin2 min2 1]
+[matchp min2 pop d1]
+[matchp d1 pop min]
+[matchp getmin2 pop d11]
+[matchp d11 pop getmin3]
+[matchp getmin3 lt islt nlt]
+[matchp nlt pop2 r1 getmin]
+[matchp islt exch nlt]
+[matchp r1 match remain remain]
+
+# Execution:
+# - @sequential forces single region
+# - All molecules can react together
+# - Correctness guaranteed
+
+
+# ============================================================
+# Example 3: Hybrid (Parallel + Sequential)
+# ============================================================
+
+# Process data in parallel
+@parallel preprocessing {
+  [process_file file1.txt]
+  [process_file file2.txt]
+  [process_file file100.txt]
+}
+
+[matchp process_file read data]
+[matchp data parse records]
+[matchp records emit results]
+
+# Wait for all parallel work to complete
+@barrier
+
+# Then sort results sequentially
+@sequential {
+  [sort results]
+}
+
+# Execution:
+# - Parallel processing of 100 files
+# - Barrier ensures all complete
+# - Sequential sort of combined results
+
+
+# ============================================================
+# Example 4: MapReduce Pattern
+# ============================================================
+
+# Map phase (parallel)
+@parallel map {
+  [map hello]
+  [map world]
+  [map hello]
+  [map test]
+}
+
+[matchp map emit]  # Transform to (word, 1)
+
+@barrier  # Synchronization point
+
+# Shuffle phase (group by key)
+@shuffle_by_key
+
+# Reduce phase (parallel by key)
+@parallel reduce {
+  # System automatically groups same words together
+  # Each region handles different keys
+}
+
+[matchp emit reduce count 1]
+[matchp reduce match combine sum]
+
+# Execution:
+# - Map: each word processed in parallel
+# - Barrier: wait for all maps
+# - Shuffle: group by key automatically
+# - Reduce: parallel aggregation by key
+
+
+# ============================================================
+# Example 5: Pipeline Parallelism
+# ============================================================
+
+# Multi-stage pipeline with different parallelism
+@pipeline {
+  @stage read @parallel {
+    [read chunk1]
+    [read chunk2]
+    [read chunk10]
+  }
+
+  @stage process @parallel {
+    # Previous stage output automatically distributed
+  }
+
+  @stage aggregate @sequential {
+    # Final aggregation needs all data
+  }
+}
+
+[matchp read parse chunk]
+[matchp chunk process data]
+[matchp data aggregate result]
+
+# Execution:
+# - Each stage can have different parallelism
+# - Data flows between stages automatically
+# - Pipeline keeps all cores busy
+
+
+# ============================================================
+# Semantics
+# ============================================================
+
+# @parallel work { ... }
+#   - Creates N regions (from command line: --regions=8)
+#   - Routes molecules by hash(molecule_id) % N
+#   - Persistent matchp rules shared via Arc
+#   - No cross-region communication needed
+#   - Best for: independent work items
+
+# @sequential { ... }
+#   - Forces single region execution
+#   - All molecules can react together
+#   - Correctness guaranteed
+#   - Best for: algorithms with dependencies
+
+# @barrier
+#   - Synchronization point
+#   - Waits for all regions to reach quiescence
+#   - Combines all molecules to single region
+#   - Then continues with next block
+
+# @shuffle_by_key
+#   - Routes molecules by hash(key) where key is 2nd symbol
+#   - Groups same keys in same region
+#   - Enables parallel aggregation
+#   - Best for: MapReduce reduce phase
+
+# @pipeline { @stage ... }
+#   - Creates multi-stage execution
+#   - Each stage can specify parallelism
+#   - Stages connected by queues
+#   - Best for: streaming data processing
+
+
+# ============================================================
+# Benefits
+# ============================================================
+
+# 1. Explicit parallelism - programmer knows what's parallel
+# 2. Correct by default - sequential when in doubt
+# 3. Composable - can mix parallel and sequential
+# 4. Honest - system doesn't pretend to auto-parallelize
+# 5. Fast - achieves near-linear speedup when applicable
+
+# ============================================================
+# Limitations
+# ============================================================
+
+# 1. Programmer must understand algorithm characteristics
+# 2. Wrong annotation can break correctness (@parallel on sequential)
+# 3. No automatic dependency analysis
+# 4. Barrier synchronization has overhead
+# 5. Not all algorithms benefit from parallelism
