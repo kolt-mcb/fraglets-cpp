@@ -11,6 +11,8 @@ Cargo.lock
 /test_super_heavy
 /parallel_benchmark
 /run_mapreduce
+/test_simple_threading
+/compare_threading_models
 
 # IDE files
 .vscode/
