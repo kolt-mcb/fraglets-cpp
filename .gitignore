@@ -13,6 +13,7 @@ Cargo.lock
 /run_mapreduce
 /test_simple_threading
 /compare_threading_models
+/demonstrate_region_limitation
 
 # IDE files
 .vscode/
