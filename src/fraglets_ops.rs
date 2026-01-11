@@ -44,16 +44,17 @@ pub fn op_pop2(mol: &Molecule) -> Option<Vec<Molecule>> {
         ])
     } else {
         // Size > 3: return two molecules
-        // First: [index_1, index_3]
-        // Second: everything from index 4 onward
+        // mol1: [index_1, index_3]
+        // mol2: [index_2, index_4, index_5, ...]
         let mol1 = Molecule::new(vec![&mol.symbols[1], &mol.symbols[3]]);
 
+        let mut mol2_parts = vec![mol.symbols[2].clone()];
         if mol.symbols.len() > 4 {
-            let tail: Vec<String> = mol.symbols[4..].to_vec();
-            Some(vec![mol1, Molecule::from_strings(tail)])
-        } else {
-            Some(vec![mol1])
+            mol2_parts.extend_from_slice(&mol.symbols[4..]);
         }
+        let mol2 = Molecule::from_strings(mol2_parts);
+
+        Some(vec![mol1, mol2])
     }
 }
 
@@ -70,14 +71,23 @@ pub fn op_dup(mol: &Molecule) -> Option<Vec<Molecule>> {
     }
 }
 
-/// exch - exchanges first two symbols after head
+/// exch - exchanges symbols at index 2 and 3
 pub fn op_exch(mol: &Molecule) -> Option<Vec<Molecule>> {
-    if mol.symbols.len() >= 3 {
-        let mut new_symbols = vec![mol.symbols[0].clone(), mol.symbols[2].clone(), mol.symbols[1].clone()];
-        new_symbols.extend_from_slice(&mol.symbols[3..]);
-        Some(vec![Molecule::from_strings(new_symbols)])
+    if mol.symbols.len() < 2 {
+        return None;
+    }
+
+    if mol.symbols.len() < 4 {
+        // Size 2-3: just return tail unchanged
+        Some(vec![Molecule::from_strings(mol.tail())])
+    } else if mol.symbols.len() < 5 {
+        // Size 4: [index_1, index_3, index_2]
+        Some(vec![Molecule::new(vec![&mol.symbols[1], &mol.symbols[3], &mol.symbols[2]])])
     } else {
-        None
+        // Size >= 5: [index_1, index_3, index_2, index_4+]
+        let mut result = vec![mol.symbols[1].clone(), mol.symbols[3].clone(), mol.symbols[2].clone()];
+        result.extend_from_slice(&mol.symbols[4..]);
+        Some(vec![Molecule::from_strings(result)])
     }
 }
 
