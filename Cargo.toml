@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 crossbeam-channel = "0.5"
 rand = "0.8"
+dashmap = "6.1"
 
 [[bin]]
 name = "demo"
@@ -30,3 +31,7 @@ path = "src/bin/fraglets.rs"
 [[example]]
 name = "multiplicity_benchmark"
 path = "examples/multiplicity_benchmark.rs"
+
+[[example]]
+name = "shared_pool_vs_regions"
+path = "examples/shared_pool_vs_regions.rs"

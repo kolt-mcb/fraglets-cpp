@@ -11,6 +11,7 @@ pub mod parser;
 pub mod bimol_region;
 pub mod fraglets_system;
 pub mod visualization;
+pub mod shared_pool;
 
 // Re-exports for convenience
 pub use fraglets_ops::{get_default_rules, op_matchp, op_match, BimolOp};
@@ -18,6 +19,7 @@ pub use parser::parse_fra_file;
 pub use fraglets_system::{FragletsSystem, CompleteFragletsBuilder};
 pub use bimol_region::{BimolRegion, BimolReactionRule};
 pub use visualization::{generate_reaction_network, generate_region_flow, generate_operation_graph};
+pub use shared_pool::SharedPool;
 
 // ============================================================================
 // MOLECULE
