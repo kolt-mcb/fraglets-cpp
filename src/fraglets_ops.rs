@@ -55,13 +55,30 @@ pub fn op_exch(mol: &Molecule) -> Option<Vec<Molecule>> {
     }
 }
 
-/// split - breaks into individual symbol molecules
+/// split - splits on first "*" delimiter into two molecules
 pub fn op_split(mol: &Molecule) -> Option<Vec<Molecule>> {
     let tail = mol.tail();
-    if !tail.is_empty() {
-        Some(tail.into_iter().map(|s| Molecule::new(vec![&s])).collect())
+    if tail.is_empty() {
+        return Some(vec![]);
+    }
+
+    // Find the first "*" delimiter
+    if let Some(pos) = tail.iter().position(|s| s == "*") {
+        // Split into two molecules: before * and after *
+        let before: Vec<String> = tail[..pos].to_vec();
+        let after: Vec<String> = tail[pos+1..].to_vec();
+
+        let mut result = Vec::new();
+        if !before.is_empty() {
+            result.push(Molecule::from_strings(before));
+        }
+        if !after.is_empty() {
+            result.push(Molecule::from_strings(after));
+        }
+        Some(result)
     } else {
-        Some(vec![])
+        // No delimiter found - return the whole tail as one molecule
+        Some(vec![Molecule::from_strings(tail)])
     }
 }
 
@@ -83,28 +100,37 @@ pub fn op_nop(mol: &Molecule) -> Option<Vec<Molecule>> {
     }
 }
 
-/// empty - creates empty marker molecule
+/// empty - removes "empty" and next symbol
 pub fn op_empty(mol: &Molecule) -> Option<Vec<Molecule>> {
-    // [empty tag ...] where if size > 3, removes "empty" and "tag"
-    if mol.symbols.len() > 3 {
+    if mol.symbols.len() == 3 {
+        // Size 3: return empty molecule (which will be ignored/disappear)
+        None
+    } else if mol.symbols.len() > 3 {
         // Return everything from position 2 onwards
         let result: Vec<String> = mol.symbols[2..].to_vec();
         Some(vec![Molecule::from_strings(result)])
     } else {
-        // Size <= 3: no reaction
+        // Size < 3: no reaction
         None
     }
 }
 
-/// length - returns length of tail
+/// length - returns [tag count data...] preserving the data
 pub fn op_length(mol: &Molecule) -> Option<Vec<Molecule>> {
-    if mol.symbols.len() >= 2 {
-        let tail_len = mol.symbols.len() - 1;
-        let tag = &mol.symbols[1];
-        Some(vec![Molecule::new(vec![tag, &tail_len.to_string()])])
-    } else {
-        None
+    if mol.symbols.len() <= 2 {
+        return None;
     }
+
+    // Calculate length of data (everything after "length" and "tag")
+    let data_len = mol.symbols.len() - 2;
+    let tag = &mol.symbols[1];
+    let data = &mol.symbols[2..];
+
+    // Build result: [tag, count, data...]
+    let mut result = vec![tag.clone(), data_len.to_string()];
+    result.extend_from_slice(data);
+
+    Some(vec![Molecule::from_strings(result)])
 }
 
 /// lt - less than comparison

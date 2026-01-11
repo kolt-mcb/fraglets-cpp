@@ -1,0 +1,3 @@
+# Test sort step 2
+[matchp continue split remain * getmin]
+[continue 5 3 8 1]

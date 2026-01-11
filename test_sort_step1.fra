@@ -1,0 +1,3 @@
+# Test first step of sort
+[matchp sort empty finish continue]
+[sort 5 3 8 1]
