@@ -10,6 +10,7 @@ Cargo.lock
 /test_sort_roundrobin
 /test_super_heavy
 /parallel_benchmark
+/run_mapreduce
 
 # IDE files
 .vscode/
