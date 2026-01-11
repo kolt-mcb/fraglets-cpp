@@ -2,6 +2,15 @@
 /target/
 Cargo.lock
 
+# Test binaries
+/check_sort_distribution
+/test_distribution
+/test_heavy_parallel
+/test_parallel_routing
+/test_sort_roundrobin
+/test_super_heavy
+/parallel_benchmark
+
 # IDE files
 .vscode/
 .idea/
