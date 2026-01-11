@@ -39,3 +39,7 @@ path = "examples/shared_pool_vs_regions.rs"
 [[example]]
 name = "test_sort"
 path = "examples/test_sort.rs"
+
+[[example]]
+name = "quick_pool_test"
+path = "examples/quick_pool_test.rs"
