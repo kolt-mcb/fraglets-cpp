@@ -43,3 +43,15 @@ path = "examples/test_sort.rs"
 [[example]]
 name = "quick_pool_test"
 path = "examples/quick_pool_test.rs"
+
+[[example]]
+name = "scaling_plot"
+path = "examples/scaling_plot.rs"
+
+[[example]]
+name = "quick_scaling"
+path = "examples/quick_scaling.rs"
+
+[[example]]
+name = "fast_scaling"
+path = "examples/fast_scaling.rs"
