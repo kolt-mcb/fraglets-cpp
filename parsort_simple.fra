@@ -1,0 +1,110 @@
+# Simple Parallel Sort for Fraglets
+# Creates multiple independent sorting tasks that can run in parallel
+#
+# Key idea: Break list into chunks, each chunk sorts independently
+# This creates MULTIPLE unimolecular molecules that different threads can process
+#
+# Usage: [parsort N1 N2 N3 N4 ... Nk]
+
+# =============================================================================
+# CHUNK CREATION - Creates independent work items
+# =============================================================================
+
+# Split into 4-element chunks that will be sorted independently
+# Input: [parsort A B C D E F G H ...]
+# Output: [sortme A B C D] [sortme E F G H] ... (independent molecules!)
+
+# Start chunking
+[matchp parsort chunk3]
+
+# Extract 3 elements and create sortme task
+[matchp chunk3 copy c1]
+[matchp c1 length checklen]
+[matchp checklen lt toofew dochunk 3]
+
+# Not enough elements - done chunking
+[matchp toofew pop2 checklen pop chunk3 match final_sort]
+[matchp final_sort sortme]
+
+# Have enough - extract 3 elements
+[matchp dochunk pop checklen chunk3 split extract3 * continue]
+[matchp extract3 match sortme sendme]
+[matchp sendme pop sortme]
+[matchp continue chunk3]
+
+# =============================================================================
+# INDEPENDENT SORTING - THIS RUNS IN PARALLEL
+# Multiple threads can process different [sortme ...] molecules simultaneously!
+# =============================================================================
+
+# Sort small chunk (3 elements) using simple sorting network
+# [sortme A B C] -> [sorted A' B' C'] where A' <= B' <= C'
+
+# Check size first
+[matchp sortme length slen]
+[matchp slen lt handle_small sort3 3]
+
+# 0-2 elements - already sorted
+[matchp handle_small pop slen match sorted finish]
+[matchp finish pop sorted]
+
+# Sort exactly 3 elements using sorting network
+# Compare-and-swap pairs to get sorted order
+[matchp sort3 pop slen sortme split s1 * s2]
+[matchp s1 pop swap12]
+[matchp s2 split extr2 * s3]
+
+# Sort first two elements
+[matchp swap12 lt ok12 swap12b]
+[matchp ok12 match extr2 compare13]
+[matchp swap12b exch match extr2 compare13]
+
+# Extract third element and compare
+[matchp extr2 pop third]
+[matchp compare13 match third split get1 * get2]
+[matchp get1 match third lt ok13 swap13]
+
+# First and third in order
+[matchp ok13 match get2 match third compare23]
+
+# Swap first and third
+[matchp swap13 match get2 exch match third compare23]
+
+# Compare second and third
+[matchp compare23 split geta * getb]
+[matchp geta match third lt ok23 swap23]
+
+# All sorted
+[matchp ok23 match getb match sorted finish]
+
+# Swap second and third
+[matchp swap23 match getb exch match sorted finish]
+
+# =============================================================================
+# MERGING - Combines sorted chunks
+# =============================================================================
+
+# Collect sorted chunks and merge
+[matchp sorted collect]
+[matchp collect match sorted trymerge]
+
+# Try to merge two sorted chunks
+[matchp trymerge match sorted startmerge]
+[matchp startmerge split m1 * m2]
+
+# Simple merge: interleave and re-sort
+# For simplicity, just concatenate and mark for re-sorting
+# A more sophisticated merge would maintain sorted order
+[matchp m1 match m2 match sortme]
+
+# =============================================================================
+# TEST DATA
+# =============================================================================
+
+# Test with 12 numbers - will create 4 independent [sortme ...] molecules
+# that can be processed by different threads simultaneously
+[parsort 45 12 78 23 91 34 56 67 89 11 43 29]
+
+# Additional tests
+# [parsort 9 8 7 6 5 4 3 2 1]
+# [parsort 5 3 8 1 9 2]

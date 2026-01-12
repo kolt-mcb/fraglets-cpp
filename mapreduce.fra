@@ -1,0 +1,36 @@
+# MapReduce Word Count in Fraglets
+# Map phase: [map word] -> [emit word 1]
+# Reduce phase: [reduce word count1 count2] -> [reduce word total]
+
+# Map operation: emit (word, 1)
+[matchp map emit]
+
+# Reduce operation: sum counts
+[matchp emit match combine]
+[matchp combine split word * count1 count2]
+[matchp count1 match count2 sum]
+[matchp sum split a * b]
+[matchp a match b add]
+[matchp add split x * y]
+[matchp x match y dosum]
+[matchp dosum exch lt sumlt sumge]
+[matchp sumlt pop emit]
+[matchp sumge pop2 result]
+
+# Test data: count words
+[map hello]
+[map world]
+[map hello]
+[map test]
+[map world]
+[map hello]
+[map test]
+[map test]
+[map foo]
+[map bar]
+[map hello]
+[map world]
+[map foo]
+[map bar]
+[map hello]
+[map test]

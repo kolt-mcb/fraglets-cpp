@@ -1,0 +1,4 @@
+# Simple matchp test
+# Should match and produce [result x y z]
+[matchp test result]
+[test x y z]
