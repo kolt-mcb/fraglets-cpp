@@ -55,3 +55,7 @@ path = "examples/quick_scaling.rs"
 [[example]]
 name = "fast_scaling"
 path = "examples/fast_scaling.rs"
+
+[[example]]
+name = "large_sort_test"
+path = "examples/large_sort_test.rs"
