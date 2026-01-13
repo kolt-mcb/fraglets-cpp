@@ -910,6 +910,117 @@ void fraglets::run(int niter,int molCap,bool quite = false){
 }
 
 
+// Multi-threaded execution support
+void fraglets::set_num_threads(int threads){
+    this->num_threads = threads;
+}
+
+void fraglets::worker_thread_func(int thread_id, int niter){
+    // Each thread performs reactions in parallel
+    for (int i = 0; i < niter / this->num_threads; i++){
+        // Lock-protected reaction execution
+        std::lock_guard<std::mutex> lock(this->multiset_mutex);
+
+        if (!this->idle && this->wt > 0){
+            double w = random_double() * this->wt;
+            this->react(w);
+        }
+    }
+}
+
+void fraglets::run_parallel(int niter, int molCap, bool quiet, int threads){
+    this->quiet = quiet;
+    this->num_threads = threads;
+
+    if (!this->quiet){
+        std::cout << "Running with " << threads << " threads\n";
+    }
+
+    for (int i = 1; i < niter; i++){
+        // Calculate propensities (must be done single-threaded)
+        this->propensity();
+
+        if (!this->idle && threads > 1){
+            // Execute multiple reactions in parallel
+            // Each thread performs one reaction with full locking
+            std::vector<std::thread> thread_pool;
+
+            int num_parallel_reactions = std::min(threads, 8);  // Max 8 parallel reactions
+            for (int t = 0; t < num_parallel_reactions; t++){
+                thread_pool.emplace_back([this]() {
+                    std::lock_guard<std::mutex> lock(this->multiset_mutex);
+                    if (!this->idle && this->wt > 0){
+                        double w = random_double() * this->wt;
+                        this->react(w);
+                    }
+                });
+            }
+
+            // Wait for all threads to complete
+            for (auto& thread : thread_pool){
+                thread.join();
+            }
+        } else {
+            // Fall back to single-threaded execution
+            this->run_bimol();
+        }
+
+        this->iter++;
+        this->activeMultisetSize.push_back(this->active.total);
+        this->passiveMultisetSize.push_back(this->passive.total);
+
+        int total = this->active.total + this->passive.total;
+
+        // Molecule cap management (same as original run())
+        while (total > molCap){
+            int n = rand() % 2;
+            if (n){
+                if (this->active.total > 0){
+                    keyMultisetMap::iterator random_it = std::next(std::begin(this->active.keyMap), rand_between(0, this->active.keyMap.size()-1));
+                    molecule_pointer mol = this->active.expelrnd(random_it->first);
+                    if (isperm(mol)){
+                        this->inject(mol);
+                    }
+                }
+            }
+            else if (this->passive.total > 0){
+                keyMultisetMap::iterator random_it = std::next(std::begin(this->passive.keyMap), rand_between(0, this->passive.keyMap.size()-1));
+                this->passive.expelrnd(random_it->first);
+            }
+            total = this->active.total + this->passive.total;
+
+            this->prop.clear();
+            this->wt = 0;
+            keyMultisetMap::iterator it = this->active.keyMap.begin();
+            for (;it != this->active.keyMap.end();it++){
+                symbol key = it->first;
+                std::size_t m = this->active.multk(key);
+                std::size_t p = this->passive.multk(key);
+                std::size_t w = m*p;
+                if (w > 0){
+                    this->prop[key] = w;
+                }
+                this->wt += w;
+            }
+            if (this->wt <= 0){
+                this->idle = true;
+            }
+        }
+
+        if (this->idle){
+            if (!this->quiet){
+                std::cout<< "idle\n";
+            }
+            return;
+        }
+    }
+
+    if (!this->quiet){
+        std::cout<< "done\n";
+    }
+    return;
+}
+
 
 void fraglets::drawGraphViz(){
 

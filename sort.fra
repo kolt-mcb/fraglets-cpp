@@ -1,39 +1,59 @@
-# sequential version of sort based on [min] function:
-# take the min, move it to ordered list, take the next min, and so on.
+# Parallel quicksort using fork for multi-threaded execution
+# [psort list>] --> [sorted list>]
 #
-# [sort ltlist>] --> [sorted ltlist>]
+# Algorithm:
+# 1. Pick pivot (first element)
+# 2. Partition into: elements < pivot, elements >= pivot
+# 3. FORK to sort both partitions IN PARALLEL (multi-threading!)
+# 4. MATCH to synchronize and combine: sorted_less + [pivot] + sorted_greater
 #
 
- [sorted]
- [matchp sort empty finish continue]
- [matchp continue split remain * getmin]
+# Base case: empty list is sorted
+[sorted_empty]
+[matchp psort empty sorted_empty]
 
-# "remain" list becomes new list to be sorted, and [min N] is appended to
-# sorted list
+# Base case: single element is sorted
+[matchp psort length check_one]
+[matchp check_one eq single_elem 1]
+[matchp single_elem pop done_single sorted done_single]
 
- [matchp min split match remain sort * split match sorted match tosorted sorted * tosorted]
+# Recursive case: partition and parallel sort
+# Pop first element as pivot, partition the rest
+[matchp psort pop pivot partition_start pivot]
 
-# this is the [getmin] function as in the fraglets tutorial, except
-# that now it stores the non-min numbers in the "remain" list
+# Partition: separate into less-than and greater-equal lists
+[matchp partition_start split partition_loop less * greater]
 
- [matchp getmin length len1]
- [matchp len1 lt getmin2 min2 1]
+# Partition loop: compare each element with pivot
+[matchp partition_loop pop elem dup comp_elem split check_empty elem * check_empty]
+[matchp check_empty empty partitioned]
 
- [matchp min2 pop d1]
- [matchp d1 pop min]
+# Compare element with pivot
+[matchp comp_elem lt is_less is_greater]
 
- [matchp getmin2 pop d11]
- [matchp d11 pop getmin3]
+# Element < pivot: add to "less" list
+[matchp is_less pop elem match less split append_less * append_less less elem partition_loop]
 
- [matchp getmin3 lt islt nlt]
- [matchp nlt pop2 r1 getmin]
- [matchp islt exch nlt]
+# Element >= pivot: add to "greater" list
+[matchp is_greater exch pop elem match greater split append_greater * append_greater greater elem partition_loop]
 
-# store non-min values in "remain" list, to be sorted later
- [matchp r1 match remain remain]
+# Partitioning done - PARALLEL FORK to sort both sublists
+# This creates TWO independent threads running simultaneously!
+[matchp partitioned match less match greater create_threads]
+[matchp create_threads fork sort_less sort_greater]
 
-# test:
+# Thread 1: recursively sort "less" list
+[matchp sort_less match less psort sorted_less]
 
- [sort 203 -200 989 -446 -927 962 -485 714 -351 226 -791 55 448 -32 -477 261 529 38 922 -419 822 -395 -757 -951 757 -521 88]
+# Thread 2: recursively sort "greater" list
+[matchp sort_greater match greater psort sorted_greater]
 
-# [pop2 pop2 pop2]
+# SYNCHRONIZE: wait for both threads to complete, then combine
+[matchp sorted_less match sorted_greater combine_with_pivot]
+[matchp combine_with_pivot match pivot final_concat]
+
+# Concatenate: sorted_less + pivot + sorted_greater
+[matchp final_concat split concat1 sorted_less * split concat2 pivot * sorted_greater sorted]
+
+# Test with the same numbers as before
+[psort 203 -200 989 -446 -927 962 -485 714 -351 226 -791 55 448 -32 -477 261 529 38 922 -419 822 -395 -757 -951 757 -521 88]
